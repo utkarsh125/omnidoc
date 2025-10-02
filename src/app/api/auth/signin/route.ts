@@ -52,6 +52,24 @@ export async function POST(request: NextRequest){
                 status: 401
             })
         }
+
+        //generate JWT token
+        const token = jwt.sign({
+            userId: foundUser.id,
+            email: foundUser.email,
+        }, process.env.JWT_SECRET || 'somesecretkeynig', {
+            expiresIn: '1d'
+        })
+
+        const { password: _, ...userData } = foundUser;
+
+        return NextResponse.json({
+            message: "Sign in successful",
+            user: userData,
+            token,
+        }, {
+            status: 200
+        })
     } catch (error) {
 
         console.error("Error signing in: ", error);
@@ -61,5 +79,7 @@ export async function POST(request: NextRequest){
         }, {
             status: 500
         })
+    } finally {
+        await prisma.$disconnect();
     }
 }
