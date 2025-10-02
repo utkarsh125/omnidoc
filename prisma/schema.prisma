@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -19,54 +16,185 @@ model User {
   name String
   email String @unique
   password String
-  documents Document[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  documents Document[] @relation("DocumentOwner")
+  collaborations DocumentCollaborators[]
+  comments DocumentComment[]  // Added missing relation
+  settings UserSettings?     // Added missing relation
+  
+  @@index([email])
 }
 
 model Document {
   id String @id @default(uuid())
   title String
-  content String @db.Text 
-  userId String 
-
-  //Document type
-  documentType String @default("new") //"new" | "uploaded" -> types for doctype
-
-  //file metadata (for uploaded files only)
-  originalFileName String?
-  originalFileSize Int?
-  originalMimeType String?
-  originalFileUrl String?
-
-  //processing status
-  processingStatus String @default("completed") //"completed" | "processing" | "failed"
-  processingError String?
-
-  //Timestamps
+  content String @db.Text  // Markdown content
+  userId String  // Owner of the document
+  
+  // Document metadata
+  isPublic Boolean @default(false)
+  tags String[] // Array of tags for categorization
+  
+  // Document settings
+  allowComments Boolean @default(true)
+  allowSuggestions Boolean @default(true)
+  
+  // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   lastEditedAt DateTime @default(now())
-
-  //relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Relations
+  user User @relation("DocumentOwner", fields: [userId], references: [id], onDelete: Cascade)
   images DocumentImage[]
-
+  versions DocumentVersion[]
+  collaborators DocumentCollaborators[]
+  comments DocumentComment[]
+  shares DocumentShare[]     // Added missing relation
+  activities DocumentActivity[]  // Added missing relation
+  
   @@index([userId])
-  @@index([documentType])
-  @@index([processingStatus])
+  @@index([isPublic])
+  @@index([tags])
+  @@index([createdAt])
+  @@index([updatedAt])
 }
 
 model DocumentImage {
-
   id String @id @default(uuid())
   documentId String
-  originalName String 
-  fileName String //generated unique filename
-  fileUrl String //url to stored image
-  fileSize Int 
-  mimeType String 
+  fileName String  // Generated unique filename
+  originalName String  // Original filename from upload
+  fileUrl String  // URL to access the image
+  fileSize Int
+  mimeType String
+  width Int?
+  height Int?
   createdAt DateTime @default(now())
-
+  
   document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-
+  
   @@index([documentId])
+  @@index([fileName])
+}
+
+model DocumentVersion {
+  id String @id @default(uuid())
+  documentId String
+  content String @db.Text  // Markdown content snapshot
+  versionNumber Int
+  changeDescription String?  // Optional description of changes
+  createdAt DateTime @default(now())
+  createdBy String  // User ID who made the change
+  
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  @@index([documentId])
+  @@index([versionNumber])
+  @@index([createdAt])
+}
+
+model DocumentCollaborators {
+  id String @id @default(uuid())
+  documentId String
+  userId String
+  role String @default("editor") // "viewer", "editor", "admin"
+  permissions String[] // Array of specific permissions
+  invitedAt DateTime @default(now())
+  acceptedAt DateTime?
+  
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([documentId, userId])
+  @@index([documentId])
+  @@index([userId])
+}
+
+model DocumentComment {
+  id String @id @default(uuid())
+  documentId String
+  userId String
+  content String @db.Text
+  lineNumber Int?  // For line-specific comments
+  isResolved Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([documentId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model DocumentShare {
+  id String @id @default(uuid())
+  documentId String
+  shareToken String @unique  // Unique token for sharing
+  permissions String[] // Array of permissions
+  expiresAt DateTime?  // Optional expiration
+  maxUses Int?  // Optional usage limit
+  useCount Int @default(0)
+  createdAt DateTime @default(now())
+  createdBy String  // User ID who created the share
+  
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  @@index([documentId])
+  @@index([shareToken])
+  @@index([expiresAt])
+}
+
+model DocumentTemplate {
+  id String @id @default(uuid())
+  name String
+  description String?
+  content String @db.Text  // Markdown template content
+  category String?  // "blog", "meeting-notes", "api-docs", etc.
+  isPublic Boolean @default(false)
+  userId String?  // Creator of the template (null for system templates)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([category])
+  @@index([isPublic])
+  @@index([userId])
+}
+
+model UserSettings {
+  id String @id @default(uuid())
+  userId String @unique
+  editorTheme String @default("default")
+  fontSize Int @default(14)
+  autoSave Boolean @default(true)
+  autoSaveInterval Int @default(30) // seconds
+  showLineNumbers Boolean @default(true)
+  wordWrap Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+}
+
+model DocumentActivity {
+  id String @id @default(uuid())
+  documentId String
+  userId String
+  action String  // "created", "edited", "shared", "commented", etc.
+  description String?
+  metadata Json?  // Additional data about the action
+  createdAt DateTime @default(now())
+  
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  @@index([documentId])
+  @@index([userId])
+  @@index([createdAt])
 }
