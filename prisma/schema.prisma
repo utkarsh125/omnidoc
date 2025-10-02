@@ -25,14 +25,48 @@ model User {
 model Document {
   id String @id @default(uuid())
   title String
-  content String @db.Text
-  userId String
+  content String @db.Text 
+  userId String 
+
+  //Document type
+  documentType String @default("new") //"new" | "uploaded" -> types for doctype
+
+  //file metadata (for uploaded files only)
+  originalFileName String?
+  originalFileSize Int?
+  originalMimeType String?
+  originalFileUrl String?
+
+  //processing status
+  processingStatus String @default("completed") //"completed" | "processing" | "failed"
+  processingError String?
+
+  //Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)//if the user is deleted, the documents are also deleted ("Cascade")
+  lastEditedAt DateTime @default(now())
 
-  //This creates a database index on the userId column, which can improve query performance (by filtering the documents by the userId)
-  //essential for lookups of documents by user
+  //relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  images DocumentImage[]
+
   @@index([userId])
+  @@index([documentType])
+  @@index([processingStatus])
 }
 
+model DocumentImage {
+
+  id String @id @default(uuid())
+  documentId String
+  originalName String 
+  fileName String //generated unique filename
+  fileUrl String //url to stored image
+  fileSize Int 
+  mimeType String 
+  createdAt DateTime @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+}
