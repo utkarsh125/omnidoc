@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function SignUpPage() {
   const [name, setName] = useState("");
@@ -14,24 +17,47 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setSuccess(false);
     
     if (password !== confirmPassword) {
-      alert("Passwords don't match");
+      setError("Passwords don't match");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long");
       return;
     }
     
     setIsLoading(true);
     
-    // TODO: Implement signup logic
-    console.log("Signing up with:", { name, email, password });
-    
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await axios.post("/api/auth/signup", {
+        name,
+        email,
+        password,
+      });
+
+      if (response.status === 201) {
+        setSuccess(true);
+        // Redirect to signin after 2 seconds
+        setTimeout(() => {
+          router.push("/signin");
+        }, 2000);
+      }
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || "Failed to sign up";
+      setError(errorMessage);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -45,6 +71,18 @@ export default function SignUpPage() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            {success && (
+              <Alert>
+                <AlertDescription>
+                  Account created successfully! Redirecting to sign in...
+                </AlertDescription>
+              </Alert>
+            )}
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <Input
@@ -54,7 +92,7 @@ export default function SignUpPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                disabled={isLoading}
+                disabled={isLoading || success}
               />
             </div>
             <div className="space-y-2">
@@ -66,7 +104,7 @@ export default function SignUpPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                disabled={isLoading}
+                disabled={isLoading || success}
               />
             </div>
             <div className="space-y-2">
@@ -78,10 +116,10 @@ export default function SignUpPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                disabled={isLoading}
+                disabled={isLoading || success}
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 mb-4">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
                 id="confirmPassword"
@@ -90,7 +128,7 @@ export default function SignUpPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                disabled={isLoading}
+                disabled={isLoading || success}
               />
             </div>
           </CardContent>
@@ -98,7 +136,7 @@ export default function SignUpPage() {
             <Button 
               type="submit" 
               className="w-full" 
-              disabled={isLoading}
+              disabled={isLoading || success}
             >
               {isLoading ? "Creating account..." : "Sign Up"}
             </Button>
