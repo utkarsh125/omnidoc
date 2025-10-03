@@ -91,11 +91,11 @@ export async function GET(
 //update a document
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = getCurrentUserIdFromRequest(request);
-    const documentId = params.id;
+    const {id: documentId} = await params;
     const updateData = await request.json();
 
     //check if the user has permission to edit
@@ -203,12 +203,12 @@ export async function PUT(
 //Delete doc
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         
         const userId = getCurrentUserIdFromRequest(request);
-        const documentId = params.id;
+        const { id: documentId } = await params;
 
         //check if the usr has permission to delete doc
         const document = await prisma.document.findFirst({
