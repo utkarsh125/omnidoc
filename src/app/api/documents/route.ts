@@ -42,6 +42,7 @@ export async function GET(request: NextRequest){
 }
 
 //Create a new document
+//TODO: Document locking
 export async function POST(request: NextRequest){
 
     try {

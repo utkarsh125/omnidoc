@@ -200,7 +200,73 @@ export async function PUT(
   }
 }
 
+//real-time patch for documents 
+export async function PATCH(
+    request: NextRequest,
+    { params } : { params: Promise<{ id: string }> }
+) {
+
+    try {
+        
+
+        const userId = getCurrentUserIdFromRequest(request);
+        const { id: documentId } = await params;
+        const updateData = await request.json();
+
+        //permission check
+        const document = await prisma.document.findFirst({
+            where: {
+                id: documentId,
+                OR: [
+                    { userId},
+                    {
+                        collaborators: {
+                            some: {
+                                userId,
+                                role: { in: ["admin", "editor"]},
+                                acceptedAt: { not: null },
+                            }
+                        }
+                    }
+                ]
+            }
+        });
+
+        if(!document){
+            return NextResponse.json({
+                error: "Document not found or Permission denied",
+            }, { 
+                status: 404
+            })
+        }
+
+        //update only content and lastEditedAt for real-time updates
+        const updatedDocument = await prisma.document.update({
+            where: {
+                id: documentId,
+            },
+            data: {
+                content: updateData.content,
+                lastEditedAt: new Date(),
+            },
+        });
+
+        return NextResponse.json(updatedDocument);
+
+    } catch (error) {
+        console.error(`Error updating document: ${error}`);
+        return NextResponse.json({
+            error: "Internal server error",
+            
+        }, {
+            status: 500
+        })
+    }finally {
+        await prisma.$disconnect();
+    }
+}
 //Delete doc
+//TODO: Document unlocking
 export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
