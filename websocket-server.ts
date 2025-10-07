@@ -2,13 +2,11 @@
 
 import WebSocket, { WebSocketServer } from "ws";
 import * as Y from "yjs";
-import { WebsocketProvider } from "y-websocket";
 import http from "http";
 
 //server config w/ env variables
 const PORT = parseInt(process.env.WEBSOCKET_PORT || '4000')
 const HOST = process.env.WEBSOCKET_HOST || 'localhost'
-
 
 //in-memory storage for active documents and connections
 //each document ID maps to its Yjs document instance
@@ -29,7 +27,6 @@ const wss = new WebSocketServer({ server });
 
 //handle new ws connections
 wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
-
     //extract the document ID from the url query params
     const url = new URL(req.url || '/', `http://${req.headers.host}`)
     const documentId = url.searchParams.get('document') || 'default'
@@ -39,7 +36,6 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
     //create new Yjs document if it doesn't exist
     if(!documents.has(documentId)){
         documents.set(documentId, new Y.Doc())
-
     }
 
     const doc = documents.get(documentId)!
@@ -50,16 +46,15 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
     }
     connections.get(documentId)!.add(ws)
 
-    //setup Yjs ws provider for this connection
-    //this handles all the CRDT syncronization automatically
-    new WebsocketProvider(
-        `ws://${HOST}:${PORT}`,
-        documentId,
-        doc,
-        {
-            WebSocketPolyfill: WebSocket as any
-        }
-    )
+    // Handle incoming messages
+    ws.on('message', (message: Buffer) => {
+        // Broadcast to all other clients in the same document
+        connections.get(documentId)?.forEach(client => {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
+                client.send(message)
+            }
+        })
+    })
 
     console.log(`Active connections in ${documentId}: ${connections.get(documentId)?.size}`)
 
@@ -83,9 +78,8 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
 })
 
 //start the server
-
 server.listen(PORT, HOST, () => {
-    console.log(`Websocket server started at ws://${HOST}: ${PORT}`);
+    console.log(`Websocket server started at ws://${HOST}:${PORT}`);
     console.log(`HOST: ${HOST}`);
     console.log(`PORT: ${PORT}`);
     console.log(`URL: ws://${HOST}:${PORT}`);
@@ -94,7 +88,6 @@ server.listen(PORT, HOST, () => {
 })
 
 //gracefully handle shutdown
-
 const shutdown = () => {
     console.log(`\n\nShutting down ws-server...`);
 
@@ -124,5 +117,3 @@ process.on('uncaughtException', (error) => {
 process.on('unhandledRejection', (reason, promise) => {
     console.error(`Unhandled Rejection at: ${promise}, reason: ${reason}`);
 })
-
-
