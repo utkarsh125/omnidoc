@@ -66,6 +66,7 @@
     "express": "^5.1.0",
     "input-otp": "^1.4.2",
     "jsonwebtoken": "^9.0.2",
+    "lib0": "^0.2.114",
     "lodash.throttle": "^4.1.1",
     "lucide-react": "^0.544.0",
     "marked": "^16.3.0",

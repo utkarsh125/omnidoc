@@ -25,7 +25,50 @@ model User {
   comments DocumentComment[]  // Added missing relation
   settings UserSettings?     // Added missing relation
   
+  rooms RoomUser[]
+  createdRooms Room[] //rooms created by this usr.
   @@index([email])
+}
+
+model Room {
+  id          String   @id @default(uuid())
+  name        String   
+  code        String   @unique  // For easy room joining
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Creator reference
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  
+  // Document reference kinda opt.
+  documentId  String?
+  document    Document? @relation(fields: [documentId], references: [id])
+  
+  // Room participants
+  participants RoomUser[]
+
+  @@index([code])
+  @@index([createdById])
+  @@index([documentId])
+}
+
+model RoomUser {
+  id        String   @id @default(uuid())
+  roomId    String
+  userId    String
+  role      String   @default("participant") // "host" or "participant"
+  joinedAt  DateTime @default(now())
+  lastActive DateTime @default(now())
+  
+  // Relations
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])  // Prevent duplicate room memberships
+  @@index([roomId])
+  @@index([userId])
 }
 
 model Document {
@@ -61,6 +104,7 @@ model Document {
   @@index([tags])
   @@index([createdAt])
   @@index([updatedAt])
+  Room Room[]
 }
 
 model DocumentImage {
