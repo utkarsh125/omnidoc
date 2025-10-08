@@ -49,6 +49,11 @@ model Room {
   // Room participants
   participants RoomUser[]
 
+  shareLink String? @unique //opt. sharelink for the room.
+  shareLinkExpiresAt DateTime? //opt. expiry for the sharelink.
+  allowedEmails String[] //list of allowed emails for the room
+  isPublic Boolean @default(false)
+
   @@index([code])
   @@index([createdById])
   @@index([documentId])
