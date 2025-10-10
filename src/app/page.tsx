@@ -1,12 +1,13 @@
-import React from 'react'
-import Tiptap from './components/Tiptap'
+import { Navigation } from "@/components/landing/Navigation";
+import { Hero } from "@/components/landing/Hero";
+import { TrustSection } from "@/components/landing/TrustSection";
 
-const page = () => {
+export default function LandingPage() {
   return (
-    <div>
-      <Tiptap />
-    </div>
-  )
+    <main className="min-h-screen">
+      <Navigation />
+      <Hero />
+      <TrustSection />
+    </main>
+  );
 }
-
-export default page
