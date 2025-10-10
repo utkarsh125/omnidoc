@@ -57,19 +57,32 @@ export async function POST(request: NextRequest){
         const token = jwt.sign({
             userId: foundUser.id,
             email: foundUser.email,
+            name: foundUser.name,
         }, process.env.JWT_SECRET || 'somesecretkeynig', {
-            expiresIn: '1d'
+            expiresIn: '7d'
         })
 
         const { password: _, ...userData } = foundUser;
 
-        return NextResponse.json({
+        // Create response and set cookie
+        const response = NextResponse.json({
             message: "Sign in successful",
             user: userData,
             token,
         }, {
             status: 200
         })
+
+        // Set token as httpOnly cookie
+        response.cookies.set('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+            path: '/',
+        })
+
+        return response
     } catch (error) {
 
         console.error("Error signing in: ", error);

@@ -11,7 +11,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { GradientBackground } from "@/components/auth/GradientBackground";
-import { Mail, Eye, EyeOff, Sparkles, Apple, Bubbles } from "lucide-react";
+import { Mail, Eye, EyeOff, Sparkles } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
@@ -36,7 +37,7 @@ export default function SignInPage() {
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.user));
-        router.push("/editor");
+        router.push('/dashboard');
       }
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.response?.data?.message || "Failed to sign in";
@@ -59,8 +60,10 @@ export default function SignInPage() {
       });
 
       if (response.status === 201) {
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
         setTimeout(() => {
-          router.push("/editor");
+          router.push('/dashboard');
         }, 1000);
       }
     } catch (err: any) {
@@ -72,22 +75,25 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-background">
       {/* Left side - Auth form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-card-bg">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md">
-          {/* Logo */}
-          <div className="flex items-center gap-2 mb-8">
-            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-              <Bubbles className="w-6 h-6 text-white" />
+          {/* Logo and Theme Toggle */}
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-primary-foreground" />
+              </div>
+              <span className="text-2xl font-bold text-foreground">Omnitype</span>
             </div>
-            <span className="text-2xl font-bold text-text-primary">Omnitype</span>
+            <ThemeToggle />
           </div>
 
           {/* Welcome text */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-text-primary mb-2">Welcome Back</h1>
-            <p className="text-text-secondary">We Are Happy To See You Again</p>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Welcome Back</h1>
+            <p className="text-muted-foreground">We're happy to see you again</p>
           </div>
 
           {/* Tabs */}
@@ -160,14 +166,14 @@ export default function SignInPage() {
                       Remember me
                     </label>
                   </div>
-                  <Link href="/forgot-password" className="text-sm text-primary-blue hover:underline">
+                  <Link href="/forgot-password" className="text-sm text-primary hover:underline">
                     Forgot Password?
                   </Link>
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full bg-primary-blue hover:bg-blue-600 text-white py-6 rounded-xl"
+                  className="w-full py-6 rounded-xl"
                   disabled={isLoading}
                 >
                   {isLoading ? "Signing in..." : "Login"}
@@ -294,7 +300,7 @@ function SignUpForm({
 
       <Button
         type="submit"
-        className="w-full bg-primary-blue hover:bg-blue-600 text-white py-6 rounded-xl"
+        className="w-full py-6 rounded-xl"
         disabled={isLoading}
       >
         {isLoading ? "Creating account..." : "Sign Up"}

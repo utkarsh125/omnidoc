@@ -1,45 +1,52 @@
+import { Sparkles } from "lucide-react";
+
 export function GradientBackground() {
   return (
-    <div className="relative w-full h-full overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900">
-      {/* Animated gradient waves */}
+    <div className="relative w-full h-full overflow-hidden bg-gradient-to-br from-primary via-primary/80 to-primary/60">
+      {/* Animated gradient orbs */}
       <div className="absolute inset-0">
-        <div className="absolute top-0 left-0 w-full h-full opacity-30">
-          <svg className="w-full h-full" viewBox="0 0 1000 1000" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style={{ stopColor: '#60A5FA', stopOpacity: 1 }} />
-                <stop offset="100%" style={{ stopColor: '#3B82F6', stopOpacity: 1 }} />
-              </linearGradient>
-            </defs>
-            <path
-              d="M0,500 Q250,300 500,500 T1000,500 L1000,1000 L0,1000 Z"
-              fill="url(#grad1)"
-              className="animate-pulse"
-            />
-          </svg>
-        </div>
-        <div className="absolute top-1/4 left-0 w-full h-full opacity-20">
-          <svg className="w-full h-full" viewBox="0 0 1000 1000" preserveAspectRatio="none">
-            <path
-              d="M0,600 Q250,400 500,600 T1000,600 L1000,1000 L0,1000 Z"
-              fill="#93C5FD"
-              className="animate-pulse"
-              style={{ animationDelay: '1s' }}
-            />
-          </svg>
-        </div>
+        <div className="absolute top-0 left-0 w-96 h-96 bg-primary/40 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-70 animate-blob"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-accent/40 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div className="absolute bottom-0 left-20 w-96 h-96 bg-primary/30 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
       </div>
 
-      {/* Floating orbs */}
-      <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-blue-400 rounded-full blur-3xl opacity-20 animate-pulse" />
-      <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-blue-300 rounded-full blur-3xl opacity-15 animate-pulse" style={{ animationDelay: '2s' }} />
-
-      {/* Footer text */}
-      <div className="absolute bottom-8 left-8 right-8 text-center">
-        <div className="glass-card rounded-2xl p-4 backdrop-blur-md">
-          <p className="text-white/90 text-sm">
-            © 2025 Omnitype. All rights reserved. 
+      {/* Content */}
+      <div className="relative h-full flex flex-col items-center justify-center p-12 text-primary-foreground">
+        <div className="max-w-md text-center">
+          <Sparkles className="w-16 h-16 mx-auto mb-6" />
+          <h2 className="text-4xl font-bold mb-4">
+            Welcome to Omnitype
+          </h2>
+          <p className="text-lg text-primary-foreground/90 mb-8">
+            Your modern collaborative text editor for seamless real-time collaboration
           </p>
+          
+          {/* Features */}
+          <div className="space-y-4 text-left">
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 bg-primary-foreground/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                ✓
+              </div>
+              <p className="text-sm">Real-time collaboration with your team</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 bg-primary-foreground/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                ✓
+              </div>
+              <p className="text-sm">Powerful rich text editor</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 bg-primary-foreground/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                ✓
+              </div>
+              <p className="text-sm">Secure and private by default</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="absolute bottom-8 text-sm text-primary-foreground/70">
+          © 2025 Omnitype. All rights reserved. 
         </div>
       </div>
     </div>

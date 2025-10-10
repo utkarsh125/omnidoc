@@ -1,6 +1,7 @@
 import { PrismaClient } from "@/generated/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
 
@@ -55,13 +56,35 @@ export async function POST(request: NextRequest){
                 email: true,
             }
         })
-    
-        return NextResponse.json({
-            message: "User created succesfsfully",
-            user,   
+
+        //generate JWT token for immediate login
+        const token = jwt.sign({
+            userId: user.id,
+            email: user.email,
+            name: user.name,
+        }, process.env.JWT_SECRET || 'somesecretkeynig', {
+            expiresIn: '7d'
+        })
+
+        // Create response and set cookie
+        const response = NextResponse.json({
+            message: "User created successfully",
+            user,
+            token,
         }, {
             status: 201,
-        });
+        })
+
+        // Set token as httpOnly cookie
+        response.cookies.set('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+            path: '/',
+        })
+
+        return response
     } catch (error) {
         console.error("Error creating user:", error);
         return NextResponse.json({
@@ -70,6 +93,8 @@ export async function POST(request: NextRequest){
         },  {
             status: 500, //INT_SERV_ERR
         })
+    } finally {
+        await prisma.$disconnect();
     }
 
 }
