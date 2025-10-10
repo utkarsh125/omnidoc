@@ -41,12 +41,9 @@ export async function POST(request: NextRequest){
         //if this was the last participant and not the host, cleanup the room
         const remainingParticipants = room.participants.filter(p => p.userId !== userId); //not the host
         if(remainingParticipants.length === 0){
-            await prisma.room.delete({
-                where: {
-                    id: room.id,
-                }, data: {
-                    isActive: false,
-                }
+            await prisma.room.update({
+                where: { id: room.id },
+                data: { isActive: false }
             });
         }
 
