@@ -33,6 +33,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { Sparkles } from "lucide-react"
+import axios from "axios"
 
 const navMainData = [
   {
@@ -53,11 +54,11 @@ const navSecondaryData = [
     url: "#",
     icon: IconSettings,
   },
-  {
-    title: "Get Help",
-    url: "#",
-    icon: IconHelp,
-  },
+  // {
+  //   title: "Get Help",
+  //   url: "#",
+  //   icon: IconHelp,
+  // },
 ]
 
 const documentsData = [
@@ -77,34 +78,40 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [user, setUser] = React.useState<{
     name: string
     email: string
-    avatar?: string
+    avatar: string
+    userId: string
   } | null>(null)
 
   React.useEffect(() => {
-    // Get user info from JWT token in cookie
-    const token = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('token='))
-      ?.split('=')[1]
-
-    if (token) {
+    const fetchUser = async () => {
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]))
-        setUser({
-          name: payload.name || 'User',
-          email: payload.email || 'user@example.com',
-          avatar: undefined
-        })
+        const response = await axios.get("/api/auth/user-details", {
+          withCredentials: true,
+        });
+
+        if(response.data){
+          setUser({
+            name: response.data.name || 'User',
+            email: response.data.email || 'user@mail.com',
+            avatar: '',
+            userId: response.data.id || ''
+          });
+        }
       } catch (error) {
-        console.error('Error parsing token:', error)
+        console.error("Error fetching userDetails: ", error);
+
+        //fallback to default
         setUser({
           name: 'User',
-          email: 'user@example.com',
-          avatar: undefined
-        })
+          email: 'user@mail.com',
+          avatar: '',
+          userId: ''
+        });
       }
     }
-  }, [])
+    
+    fetchUser(); // Actually call the function
+  }, []); // Add empty dependency array
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
