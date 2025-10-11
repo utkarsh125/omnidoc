@@ -1,26 +1,28 @@
 "use client"
 
 import * as React from "react"
-import { LayoutDashboard, File, LogOut } from 'lucide-react'
+import { IconLayoutDashboard, IconFile, IconLogout } from '@tabler/icons-react'
 import { useRouter, usePathname } from 'next/navigation'
 import axios from "axios"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 interface NavItem {
   title: string
   url: string
-  icon: React.ComponentType<{ size?: number; className?: string }>
+  icon: React.ComponentType<any>
 }
 
 const navMainData: NavItem[] = [
   {
     title: "Dashboard",
     url: "/dashboard",
-    icon: LayoutDashboard,
+    icon: IconLayoutDashboard,
   },
   {
     title: "Documents",
     url: "/dashboard",
-    icon: File,
+    icon: IconFile,
   },
 ]
 
@@ -87,10 +89,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<'aside'>) {
   }
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col" {...props}>
+    <aside className="w-64 bg-card border-r border-border flex flex-col transition-colors" {...props}>
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-gray-200">
-        <h1 className="text-2xl font-semibold text-blue-500">omnitype.</h1>
+      <div className="px-6 py-5 border-b border-border">
+        <h1 className="text-2xl font-semibold text-primary">omnitype.</h1>
       </div>
 
       {/* Navigation */}
@@ -102,17 +104,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<'aside'>) {
             
             return (
               <li key={item.title}>
-                <a
-                  href={item.url}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                    isActive
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                <Button
+                  variant={isActive ? "default" : "ghost"}
+                  className={cn(
+                    "w-full justify-start gap-3",
+                    isActive ? "" : "text-foreground hover:text-foreground"
+                  )}
+                  asChild
                 >
-                  <Icon size={20} />
-                  <span className="font-medium text-sm">{item.title}</span>
-                </a>
+                  <a href={item.url}>
+                    <Icon size={20} stroke={1.5} />
+                    <span className="font-medium text-sm">{item.title}</span>
+                  </a>
+                </Button>
               </li>
             )
           })}
@@ -121,25 +125,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<'aside'>) {
         {/* Projects Section */}
         <div className="mt-8">
           <div className="flex items-center justify-between px-3 mb-3">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Projects
             </h3>
-            <button className="text-gray-400 hover:text-gray-600 transition-colors">
+            <Button variant="ghost" size="icon" className="h-6 w-6">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M8 3.33334V12.6667M3.33333 8H12.6667" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
-            </button>
+            </Button>
           </div>
           <ul className="space-y-1">
             {projectsData.map((project) => (
               <li key={project.name}>
-                <a
-                  href="#"
-                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-3 text-foreground"
+                  asChild
                 >
-                  <div className={`w-3 h-3 rounded-full ${project.color}`}></div>
-                  <span className="text-sm">{project.name}</span>
-                </a>
+                  <a href="#">
+                    <div className={`w-3 h-3 rounded-full ${project.color}`}></div>
+                    <span className="text-sm">{project.name}</span>
+                  </a>
+                </Button>
               </li>
             ))}
           </ul>
@@ -147,7 +154,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<'aside'>) {
       </nav>
 
       {/* Bottom Section */}
-      <div className="border-t border-gray-200">
+      <div className="border-t border-border">
         {/* User Profile */}
         {user && (
           <div className="px-4 py-4">
@@ -161,16 +168,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<'aside'>) {
                 }}
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
-                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
               </div>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={handleLogout}
-                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                className="h-8 w-8"
                 title="Logout"
               >
-                <LogOut size={18} />
-              </button>
+                <IconLogout size={18} stroke={1.5} />
+              </Button>
             </div>
           </div>
         )}
