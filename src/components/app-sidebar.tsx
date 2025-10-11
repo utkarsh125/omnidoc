@@ -48,18 +48,11 @@ const navMainData = [
   },
 ]
 
-const navSecondaryData = [
-  {
-    title: "Settings",
-    url: "#",
-    icon: IconSettings,
-  },
-  // {
-  //   title: "Get Help",
-  //   url: "#",
-  //   icon: IconHelp,
-  // },
-]
+const navSecondaryData: {
+  title: string
+  url: string
+  icon: typeof IconHelp
+}[] = []
 
 const documentsData = [
   {

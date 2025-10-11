@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Plus, FileText, Clock, Users, Loader2 } from 'lucide-react'
+import { Plus, FileText, Clock, Users, Loader2, LayoutGrid, List } from 'lucide-react'
 
 interface Document {
   id: string
@@ -36,6 +36,7 @@ export default function Page() {
   const [isCreating, setIsCreating] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   useEffect(() => {
     // Check authentication
@@ -184,19 +185,41 @@ export default function Page() {
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
               
               {/* Header */}
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold tracking-tight">Documents</h1>
-                  <p className="text-muted-foreground mt-1">Create and manage your collaborative documents</p>
+                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Documents</h1>
+                  <p className="text-muted-foreground mt-1 text-sm sm:text-base">Create and manage your collaborative documents</p>
                 </div>
                 
-                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="gap-2">
-                      <Plus className="h-4 w-4" />
-                      New Document
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center bg-muted rounded-lg p-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`px-2 ${viewMode === 'grid' ? 'bg-background shadow-sm' : ''}`}
+                      onClick={() => setViewMode('grid')}
+                      aria-label="Grid view"
+                    >
+                      <LayoutGrid className="h-4 w-4" />
                     </Button>
-                  </DialogTrigger>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`px-2 ${viewMode === 'list' ? 'bg-background shadow-sm' : ''}`}
+                      onClick={() => setViewMode('list')}
+                      aria-label="List view"
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        <span className="hidden sm:inline">New Document</span>
+                        <span className="sm:hidden">New</span>
+                      </Button>
+                    </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Create New Document</DialogTitle>
@@ -243,7 +266,8 @@ export default function Page() {
                       </Button>
                     </DialogFooter>
                   </DialogContent>
-                </Dialog>
+                  </Dialog>
+                </div>
               </div>
 
               {/* Loading State */}
@@ -256,55 +280,94 @@ export default function Page() {
                 </div>
               ) : documents.length === 0 ? (
                 /* Empty State */
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                  <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-6">
-                    <FileText className="w-12 h-12 text-muted-foreground" />
+                <div className="flex flex-col items-center justify-center py-12 sm:py-20 text-center px-4">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 bg-muted rounded-full flex items-center justify-center mb-4 sm:mb-6">
+                    <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground" />
                   </div>
-                  <h2 className="text-2xl font-semibold mb-2">
+                  <h2 className="text-xl sm:text-2xl font-semibold mb-2">
                     Feels empty here...
                   </h2>
-                  <p className="text-muted-foreground mb-6 max-w-md">
+                  <p className="text-sm sm:text-base text-muted-foreground mb-6 max-w-md">
                     You haven't created any documents yet. Start by creating your first document and collaborate with others in real-time.
                   </p>
                   <Button onClick={() => setDialogOpen(true)} size="lg" className="gap-2">
                     <Plus className="h-5 w-5" />
-                    Create Your First Document
+                    <span className="hidden sm:inline">Create Your First Document</span>
+                    <span className="sm:hidden">Create Document</span>
                   </Button>
                 </div>
               ) : (
-                /* Documents Grid */
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {documents.map((doc) => (
-                    <Card
-                      key={doc.id}
-                      className="hover:shadow-md transition-shadow cursor-pointer group"
-                      onClick={() => openDocument(doc.id)}
-                    >
-                      <CardHeader>
-                        <CardTitle className="line-clamp-1 group-hover:text-primary transition-colors">
-                          {doc.title}
-                        </CardTitle>
-                        <CardDescription className="line-clamp-2 min-h-[2.5rem]">
-                          {doc.content || 'Empty document'}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            {formatDate(doc.lastEditedAt)}
+                viewMode === 'grid' ? (
+                  /* Documents Grid */
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                    {documents.map((doc) => (
+                      <Card
+                        key={doc.id}
+                        className="hover:shadow-md transition-shadow cursor-pointer group"
+                        onClick={() => openDocument(doc.id)}
+                      >
+                        <CardHeader>
+                          <CardTitle className="line-clamp-1 group-hover:text-primary transition-colors">
+                            {doc.title}
+                          </CardTitle>
+                          <CardDescription className="line-clamp-2 min-h-[2.5rem]">
+                            {doc.content || 'Empty document'}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              {formatDate(doc.lastEditedAt)}
+                            </div>
+                            {doc.collaborators.length > 0 && (
+                              <div className="flex items-center gap-1">
+                                <Users className="h-4 w-4" />
+                                {doc.collaborators.length}
+                              </div>
+                            )}
                           </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  /* Documents List */
+                  <div className="flex flex-col space-y-2">
+                    {documents.map((doc) => (
+                      <div
+                        key={doc.id}
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-lg border hover:shadow-md transition-shadow cursor-pointer group bg-card gap-3"
+                        onClick={() => openDocument(doc.id)}
+                      >
+                        <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                          <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium group-hover:text-primary transition-colors line-clamp-1">
+                              {doc.title}
+                            </h3>
+                            <p className="text-sm text-muted-foreground line-clamp-1">
+                              {doc.content || 'Empty document'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 sm:gap-6 text-sm text-muted-foreground pl-8 sm:pl-0">
                           {doc.collaborators.length > 0 && (
                             <div className="flex items-center gap-1">
                               <Users className="h-4 w-4" />
-                              {doc.collaborators.length}
+                              <span className="hidden sm:inline">{doc.collaborators.length}</span>
+                              <span className="sm:hidden">{doc.collaborators.length} collaborator{doc.collaborators.length !== 1 ? 's' : ''}</span>
                             </div>
                           )}
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            <span>{formatDate(doc.lastEditedAt)}</span>
+                          </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                )
               )}
             </div>
           </div>
