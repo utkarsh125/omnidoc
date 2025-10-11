@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppSidebar } from "@/components/app-sidebar"
-import { IconSearch, IconBell, IconPlus, IconClock, IconCircleCheck, IconCircleDashed, IconChevronDown, IconFileText, IconUsers, IconMenu2 } from '@tabler/icons-react'
+import { IconSearch, IconBell, IconPlus, IconChevronDown, IconFileText, IconUsers } from '@tabler/icons-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -26,14 +26,10 @@ interface Document {
   }>
 }
 
-
-export default function Page() {
+export default function DocumentsPage() {
   const router = useRouter()
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
-  const [userName, setUserName] = useState('John')
-  const [currentDate, setCurrentDate] = useState('')
-  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -41,11 +37,6 @@ export default function Page() {
       router.push('/signin')
       return
     }
-    
-    // Set current date
-    const now = new Date()
-    const options: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'long' }
-    setCurrentDate(now.toLocaleDateString('en-US', options))
     
     fetchDocuments()
   }, [])
@@ -60,13 +51,7 @@ export default function Page() {
       })
       if (response.ok) {
         const data = await response.json()
-        // Sort by lastEditedAt or updatedAt and take only the 5 most recent
-        const sortedDocs = data.sort((a: Document, b: Document) => {
-          const dateA = new Date(a.lastEditedAt || a.updatedAt).getTime()
-          const dateB = new Date(b.lastEditedAt || b.updatedAt).getTime()
-          return dateB - dateA
-        })
-        setDocuments(sortedDocs.slice(0, 5))
+        setDocuments(data)
       } else if (response.status === 401) {
         localStorage.removeItem('token')
         router.push('/signin')
@@ -124,62 +109,34 @@ export default function Page() {
 
   return (
     <div className="flex h-screen bg-background">
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-      
       {/* Sidebar */}
-      <div className={`fixed lg:relative inset-y-0 left-0 z-50 transition-transform duration-300 lg:translate-x-0 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <AppSidebar />
-      </div>
+      <AppSidebar />
       
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-card border-b border-border px-3 sm:px-4 md:px-6 py-3 md:py-4">
-          <div className="flex items-center justify-between gap-2 md:gap-4">
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden flex-shrink-0"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <IconMenu2 size={20} stroke={1.5} />
-            </Button>
-
-            {/* Search Bar */}
+        <header className="bg-card border-b border-border px-6 py-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center flex-1 max-w-2xl">
               <div className="relative flex-1">
                 <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} stroke={1.5} />
                 <Input
                   type="text"
-                  placeholder="Search..."
-                  className="pl-10 pr-3 sm:pr-16"
+                  placeholder="Search documents..."
+                  className="pl-10 pr-4"
                 />
-                <kbd className="hidden sm:block absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 text-xs font-semibold text-muted-foreground bg-muted border border-border rounded">
-                  ⌘ F
-                </kbd>
               </div>
             </div>
             
-            <div className="flex items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
-              <Button className="gap-2 hidden md:flex">
+            <div className="flex items-center gap-3 ml-6">
+              <Button 
+                onClick={() => router.push('/collaborative')}
+                className="gap-2"
+              >
                 <IconPlus size={18} stroke={1.5} />
-                <span className="hidden lg:inline">New Project</span>
-                <span className="lg:hidden">New</span>
-                <IconChevronDown size={16} stroke={1.5} className="hidden lg:inline" />
+                New Document
               </Button>
-              <Button className="gap-2 md:hidden" size="icon">
-                <IconPlus size={18} stroke={1.5} />
-              </Button>
-              <Button variant="ghost" size="icon" className="relative flex-shrink-0">
+              <Button variant="ghost" size="icon" className="relative">
                 <IconBell size={20} stroke={1.5} />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-purple-500 rounded-full"></span>
               </Button>
@@ -187,7 +144,7 @@ export default function Page() {
               <img
                 src="/3d_2.png"
                 alt="User avatar"
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full cursor-pointer hover:ring-2 hover:ring-ring transition-all flex-shrink-0"
+                className="w-9 h-9 rounded-full cursor-pointer hover:ring-2 hover:ring-ring transition-all"
                 onError={(e) => {
                   e.currentTarget.src = ''
                 }}
@@ -196,81 +153,39 @@ export default function Page() {
           </div>
         </header>
 
-        {/* Main Dashboard Content */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
-          {/* Greeting Section */}
-          <div className="mb-4 md:mb-6">
-            <p className="text-xs sm:text-sm text-muted-foreground mb-1">{currentDate}</p>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 md:mb-4">Good Evening! {userName},</h1>
-            
-            {/* Stats */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 md:gap-6 text-sm flex-wrap">
-              <div className="flex items-center gap-2">
-                <IconClock size={18} className="text-muted-foreground flex-shrink-0" stroke={1.5} />
-                <span className="font-semibold text-foreground">12hrs</span>
-                <span className="text-muted-foreground">Time Saved</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <IconCircleCheck size={18} className="text-muted-foreground flex-shrink-0" stroke={1.5} />
-                <span className="font-semibold text-foreground">24</span>
-                <span className="text-muted-foreground">Projects Completed</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <IconCircleDashed size={18} className="text-muted-foreground flex-shrink-0" stroke={1.5} />
-                <span className="font-semibold text-foreground">7</span>
-                <span className="text-muted-foreground">Projects In-progress</span>
-              </div>
-            </div>
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto p-6">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-foreground mb-2">All Documents</h1>
+            <p className="text-muted-foreground">Manage and access all your documents</p>
           </div>
 
-          {/* Recent Documents Section */}
+          {/* Documents List */}
           <Card className="shadow-sm">
-            <CardHeader className="border-b p-3 sm:p-4 md:p-6">
-              <div className="flex items-center justify-between flex-wrap gap-3 md:gap-4">
-                <div className="flex items-center gap-2">
-                  <IconFileText size={20} className="text-muted-foreground flex-shrink-0" stroke={1.5} />
-                  <CardTitle className="text-base sm:text-lg">Recent Documents</CardTitle>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <Button 
-                    onClick={() => router.push('/documents')} 
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs sm:text-sm"
-                  >
-                    View All
-                  </Button>
-                  <Button onClick={() => router.push('/collaborative')} size="sm" className="gap-1 sm:gap-2 text-xs sm:text-sm">
-                    <IconPlus size={16} stroke={1.5} className="flex-shrink-0" />
-                    <span className="hidden sm:inline">New Document</span>
-                    <span className="sm:hidden">New</span>
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0 overflow-x-auto">
+            <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="min-w-[200px]">Document Title</TableHead>
+                    <TableHead>Document Title</TableHead>
+                    <TableHead className="hidden md:table-cell">Created</TableHead>
                     <TableHead className="hidden md:table-cell">Last Edited</TableHead>
                     <TableHead className="hidden lg:table-cell">Collaborators</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
                         Loading documents...
                       </TableCell>
                     </TableRow>
                   ) : documents.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8">
+                      <TableCell colSpan={5} className="text-center py-12">
                         <div className="flex flex-col items-center justify-center gap-3">
-                          <IconFileText size={40} className="text-muted-foreground/50" stroke={1.5} />
-                          <p className="text-sm text-muted-foreground">No recent documents</p>
+                          <IconFileText size={48} className="text-muted-foreground/50" stroke={1.5} />
+                          <p className="text-muted-foreground">No documents yet</p>
                           <Button 
                             onClick={() => router.push('/collaborative')}
                             size="sm"
@@ -302,6 +217,11 @@ export default function Page() {
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
                           <span className="text-sm text-foreground">
+                            {formatDate(doc.createdAt)}
+                          </span>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <span className="text-sm text-foreground">
                             {formatDate(doc.lastEditedAt || doc.updatedAt)}
                           </span>
                         </TableCell>
@@ -317,7 +237,7 @@ export default function Page() {
                             <span className="text-sm text-muted-foreground">No collaborators</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell>
                           <Button
                             onClick={(e) => {
                               e.stopPropagation()
@@ -325,7 +245,6 @@ export default function Page() {
                             }}
                             variant="ghost"
                             size="sm"
-                            className="text-xs sm:text-sm"
                           >
                             Open
                           </Button>
@@ -342,3 +261,4 @@ export default function Page() {
     </div>
   )
 }
+

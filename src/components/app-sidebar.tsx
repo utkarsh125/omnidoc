@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { IconLayoutDashboard, IconFile, IconLogout } from '@tabler/icons-react'
+import Link from 'next/link'
+import { IconLayoutDashboard, IconFile, IconLogout, IconSparkles } from '@tabler/icons-react'
 import { useRouter, usePathname } from 'next/navigation'
 import axios from "axios"
 import { Button } from "@/components/ui/button"
@@ -21,8 +22,13 @@ const navMainData: NavItem[] = [
   },
   {
     title: "Documents",
-    url: "/dashboard",
+    url: "/documents",
     icon: IconFile,
+  },
+  {
+    title: "Word Assistant",
+    url: "/word-assistant",
+    icon: IconSparkles,
   },
 ]
 
@@ -89,9 +95,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<'aside'>) {
   }
 
   return (
-    <aside className="w-64 bg-card border-r border-border flex flex-col transition-colors" {...props}>
+    <aside className="w-64 h-screen bg-card border-r border-border flex flex-col transition-colors" {...props}>
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-border">
+      <div className="px-6 py-5 border-b border-border flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-primary">omnitype.</h1>
       </div>
 
@@ -112,10 +118,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<'aside'>) {
                   )}
                   asChild
                 >
-                  <a href={item.url}>
+                  <Link href={item.url}>
                     <Icon size={20} stroke={1.5} />
                     <span className="font-medium text-sm">{item.title}</span>
-                  </a>
+                  </Link>
                 </Button>
               </li>
             )
@@ -142,10 +148,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<'aside'>) {
                   className="w-full justify-start gap-3 text-foreground"
                   asChild
                 >
-                  <a href="#">
+                  <Link href="#">
                     <div className={`w-3 h-3 rounded-full ${project.color}`}></div>
                     <span className="text-sm">{project.name}</span>
-                  </a>
+                  </Link>
                 </Button>
               </li>
             ))}
