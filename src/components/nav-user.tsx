@@ -3,7 +3,6 @@
 import {
   IconDotsVertical,
   IconLogout,
-  IconNotification,
   IconSettings,
   IconKey,
   IconPhoto,
@@ -182,10 +181,6 @@ export function NavUser({ user }: {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => router.push('/notifications')}>
-                  <IconNotification />
-                  Notifications
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
                   <IconSettings />
                   Settings

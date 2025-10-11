@@ -3,14 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppSidebar } from "@/components/app-sidebar"
-import { SiteHeader } from "@/components/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Plus, FileText, Clock, Users, Loader2, LayoutGrid, List } from 'lucide-react'
+import { Search, Bell, Plus, Share2, Clock, CircleCheck, CircleDashed, MoreVertical, CalendarDays, StickyNote, ChevronDown } from 'lucide-react'
 
 interface Document {
   id: string
@@ -28,26 +21,117 @@ interface Document {
   }>
 }
 
+interface Task {
+  id: number
+  header: string
+  type: string
+  status: string
+  target: string
+  limit: string
+  reviewer: string
+}
+
+interface ScheduleEvent {
+  id: number
+  title: string
+  startTime: string
+  endTime: string
+  day: number
+  collaborators: string[]
+}
+
+interface Note {
+  id: number
+  title: string
+  description: string
+  checked: boolean
+}
+
 export default function Page() {
   const router = useRouter()
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
-  const [newDocTitle, setNewDocTitle] = useState('')
-  const [isCreating, setIsCreating] = useState(false)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [userName, setUserName] = useState('John')
+  const [currentDate, setCurrentDate] = useState('')
+
+  // Mock data for tasks
+  const [tasks, setTasks] = useState<Task[]>([])
+
+  // Mock schedule data
+  const scheduleEvents: ScheduleEvent[] = [
+    {
+      id: 1,
+      title: 'Kickoff Meeting',
+      startTime: '01:00 PM',
+      endTime: '02:30 PM',
+      day: 17,
+      collaborators: ['https://i.pravatar.cc/150?img=1', 'https://i.pravatar.cc/150?img=2']
+    },
+    {
+      id: 2,
+      title: 'Create Wordpress website for event Registration',
+      startTime: '04:00 PM',
+      endTime: '02:30 PM',
+      day: 17,
+      collaborators: ['https://i.pravatar.cc/150?img=3', 'https://i.pravatar.cc/150?img=4']
+    },
+    {
+      id: 3,
+      title: 'Create User flow for hotel booking',
+      startTime: '05:00 PM',
+      endTime: '02:30 PM',
+      day: 17,
+      collaborators: ['https://i.pravatar.cc/150?img=5', 'https://i.pravatar.cc/150?img=6']
+    }
+  ]
+
+  // Mock notes data
+  const notes: Note[] = [
+    {
+      id: 1,
+      title: 'Landing Page For Website',
+      description: 'To get started on a landing page, could you provide a bit more detail about its purpose?',
+      checked: false
+    },
+    {
+      id: 2,
+      title: 'Fixing icons with dark backgrounds',
+      description: 'Use icons that are easily recognizable and straightforward. Avoid overly complex designs that might confuse users.',
+      checked: false
+    },
+    {
+      id: 3,
+      title: 'Discussion regarding userflow improvement',
+      description: "What's the main goal of the landing page? (e.g., lead generation, product )",
+      checked: false
+    }
+  ]
 
   useEffect(() => {
-    // Check authentication
     const token = localStorage.getItem('token')
     if (!token) {
       router.push('/signin')
       return
     }
-    setIsAuthenticated(true)
+    
+    // Set current date
+    const now = new Date()
+    const options: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'long' }
+    setCurrentDate(now.toLocaleDateString('en-US', options))
+    
     fetchDocuments()
+    loadTasksData()
   }, [])
+
+  const loadTasksData = async () => {
+    try {
+      const response = await fetch('/dashboard/data.json')
+      const data = await response.json()
+      setTasks(data.slice(0, 3)) // Show first 3 tasks
+    } catch (error) {
+      console.error('Error loading tasks:', error)
+    }
+  }
 
   const fetchDocuments = async () => {
     try {
@@ -71,61 +155,9 @@ export default function Page() {
     }
   }
 
-  const createDocument = async () => {
-    if (!newDocTitle.trim()) return
-
-    setIsCreating(true)
-    try {
-      const token = localStorage.getItem('token')
-      const response = await fetch('/api/documents', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          title: newDocTitle,
-          content: '',
-          isPublic: false,
-          tags: []
-        })
-      })
-
-      if (response.ok) {
-        const document = await response.json()
-        
-        // Create a room for this document
-        const token = localStorage.getItem('token')
-        const roomResponse = await fetch('/api/rooms', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            name: `${newDocTitle} - Workspace`,
-            documentId: document.id
-          })
-        })
-
-        if (roomResponse.ok) {
-          const room = await roomResponse.json()
-          router.push(`/collaborative?room=${room.code}`)
-        }
-      }
-    } catch (error) {
-      console.error('Error creating document:', error)
-    } finally {
-      setIsCreating(false)
-      setDialogOpen(false)
-      setNewDocTitle('')
-    }
-  }
-
   const openDocument = async (docId: string) => {
     try {
       const token = localStorage.getItem('token')
-      // Check if there's an active room for this document
       const response = await fetch(`/api/rooms/${docId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -136,7 +168,6 @@ export default function Page() {
         const room = await response.json()
         router.push(`/collaborative?room=${room.code}`)
       } else {
-        // Create a new room if none exists
         const createRoomResponse = await fetch('/api/rooms', {
           method: 'POST',
           headers: { 
@@ -159,220 +190,274 @@ export default function Page() {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    })
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'done':
+        return 'bg-blue-500'
+      case 'in process':
+        return 'bg-green-500'
+      default:
+        return 'bg-purple-500'
+    }
+  }
+
+  const getWeekDays = () => {
+    const days = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
+    const dates = [15, 16, 17, 18, 19, 20, 14]
+    return days.map((day, index) => ({ day, date: dates[index] }))
   }
 
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }
-    >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
-              
-              {/* Header */}
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Documents</h1>
-                  <p className="text-muted-foreground mt-1 text-sm sm:text-base">Create and manage your collaborative documents</p>
-                </div>
-                
+    <div className="flex h-screen bg-gray-50">
+      {/* Sidebar */}
+      <AppSidebar />
+      
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center flex-1 max-w-2xl">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="Search or type a command"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 text-xs font-semibold text-gray-500 bg-gray-100 border border-gray-200 rounded">
+                  ⌘ F
+                </kbd>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4 ml-6">
+              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+                <Plus size={18} />
+                New Project
+                <ChevronDown size={16} />
+              </button>
+              <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <Bell size={20} className="text-gray-600" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-purple-500 rounded-full"></span>
+              </button>
+              <img
+                src="https://i.pravatar.cc/150?img=12"
+                alt="User avatar"
+                className="w-9 h-9 rounded-full cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
+                onError={(e) => {
+                  e.currentTarget.src = 'https://i.pravatar.cc/150?img=1'
+                }}
+              />
+            </div>
+          </div>
+        </header>
+
+        {/* Main Dashboard Content */}
+        <main className="flex-1 overflow-y-auto p-6">
+          {/* Greeting Section */}
+          <div className="mb-6">
+            <p className="text-sm text-gray-500 mb-1">{currentDate}</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Good Evening! {userName},</h1>
+            
+            {/* Stats */}
+            <div className="flex items-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <Clock size={18} className="text-gray-600" />
+                <span className="font-semibold text-gray-900">12hrs</span>
+                <span className="text-gray-500">Time Saved</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CircleCheck size={18} className="text-gray-600" />
+                <span className="font-semibold text-gray-900">24</span>
+                <span className="text-gray-500">Projects Completed</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CircleDashed size={18} className="text-gray-600" />
+                <span className="font-semibold text-gray-900">7</span>
+                <span className="text-gray-500">Projects In-progress</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Projects Section */}
+          <div className="bg-white rounded-xl border border-gray-200 mb-6">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-gray-900">My Projects</h2>
+                <button className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-1">
+                  This Week
+                  <ChevronDown size={14} />
+                </button>
+              </div>
+              <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                See All
+              </button>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Task Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Assign
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
+                        Loading...
+                      </td>
+                    </tr>
+                  ) : tasks.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
+                        No tasks available
+                      </td>
+                    </tr>
+                  ) : (
+                    tasks.map((task) => (
+                      <tr key={task.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 text-gray-400">
+                              <span className="text-sm">{task.target}</span>
+                              <span className="text-sm">{task.limit}</span>
+                            </div>
+                            <span className="text-sm font-medium text-gray-900">{task.header}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <img
+                              src={`https://i.pravatar.cc/150?img=${task.id}`}
+                              alt={task.reviewer}
+                              className="w-6 h-6 rounded-full"
+                              onError={(e) => {
+                                e.currentTarget.src = 'https://i.pravatar.cc/150?img=1'
+                              }}
+                            />
+                            <span className="text-sm text-gray-700">{task.reviewer}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(task.status)}`}>
+                            {task.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Bottom Section - Schedule and Notes */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Schedule */}
+            <div className="bg-white rounded-xl border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center bg-muted rounded-lg p-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`px-2 ${viewMode === 'grid' ? 'bg-background shadow-sm' : ''}`}
-                      onClick={() => setViewMode('grid')}
-                      aria-label="Grid view"
+                  <CalendarDays size={20} className="text-gray-600" />
+                  <h2 className="text-lg font-semibold text-gray-900">Schedule</h2>
+                </div>
+                <button className="p-1 hover:bg-gray-100 rounded transition-colors">
+                  <MoreVertical size={18} className="text-gray-600" />
+                </button>
+              </div>
+
+              {/* Week Days */}
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="grid grid-cols-7 gap-2">
+                  {getWeekDays().map((item, index) => (
+                    <div
+                      key={index}
+                      className={`text-center py-2 rounded-lg ${
+                        item.date === 17
+                          ? 'bg-purple-500 text-white'
+                          : 'hover:bg-gray-100'
+                      }`}
                     >
-                      <LayoutGrid className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`px-2 ${viewMode === 'list' ? 'bg-background shadow-sm' : ''}`}
-                      onClick={() => setViewMode('list')}
-                      aria-label="List view"
-                    >
-                      <List className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button className="gap-2">
-                        <Plus className="h-4 w-4" />
-                        <span className="hidden sm:inline">New Document</span>
-                        <span className="sm:hidden">New</span>
-                      </Button>
-                    </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Create New Document</DialogTitle>
-                      <DialogDescription>
-                        Give your document a name to get started
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="title">Document Title</Label>
-                        <Input
-                          id="title"
-                          placeholder="Enter document title..."
-                          value={newDocTitle}
-                          onChange={(e) => setNewDocTitle(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !isCreating) {
-                              createDocument()
-                            }
-                          }}
-                        />
-                      </div>
+                      <div className="text-xs font-medium">{item.day}</div>
+                      <div className="text-sm font-semibold mt-1">{item.date}</div>
                     </div>
-                    <DialogFooter>
-                      <Button
-                        variant="outline"
-                        onClick={() => setDialogOpen(false)}
-                        disabled={isCreating}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={createDocument}
-                        disabled={!newDocTitle.trim() || isCreating}
-                      >
-                        {isCreating ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Creating...
-                          </>
-                        ) : (
-                          'Create Document'
-                        )}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                  </Dialog>
+                  ))}
                 </div>
               </div>
 
-              {/* Loading State */}
-              {loading ? (
-                <div className="flex items-center justify-center py-20">
-                  <div className="text-center">
-                    <Loader2 className="h-12 w-12 animate-spin mx-auto text-muted-foreground" />
-                    <p className="mt-4 text-muted-foreground">Loading documents...</p>
-                  </div>
-                </div>
-              ) : documents.length === 0 ? (
-                /* Empty State */
-                <div className="flex flex-col items-center justify-center py-12 sm:py-20 text-center px-4">
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 bg-muted rounded-full flex items-center justify-center mb-4 sm:mb-6">
-                    <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground" />
-                  </div>
-                  <h2 className="text-xl sm:text-2xl font-semibold mb-2">
-                    Feels empty here...
-                  </h2>
-                  <p className="text-sm sm:text-base text-muted-foreground mb-6 max-w-md">
-                    You haven't created any documents yet. Start by creating your first document and collaborate with others in real-time.
-                  </p>
-                  <Button onClick={() => setDialogOpen(true)} size="lg" className="gap-2">
-                    <Plus className="h-5 w-5" />
-                    <span className="hidden sm:inline">Create Your First Document</span>
-                    <span className="sm:hidden">Create Document</span>
-                  </Button>
-                </div>
-              ) : (
-                viewMode === 'grid' ? (
-                  /* Documents Grid */
-                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                    {documents.map((doc) => (
-                      <Card
-                        key={doc.id}
-                        className="hover:shadow-md transition-shadow cursor-pointer group"
-                        onClick={() => openDocument(doc.id)}
-                      >
-                        <CardHeader>
-                          <CardTitle className="line-clamp-1 group-hover:text-primary transition-colors">
-                            {doc.title}
-                          </CardTitle>
-                          <CardDescription className="line-clamp-2 min-h-[2.5rem]">
-                            {doc.content || 'Empty document'}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" />
-                              {formatDate(doc.lastEditedAt)}
-                            </div>
-                            {doc.collaborators.length > 0 && (
-                              <div className="flex items-center gap-1">
-                                <Users className="h-4 w-4" />
-                                {doc.collaborators.length}
-                              </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  /* Documents List */
-                  <div className="flex flex-col space-y-2">
-                    {documents.map((doc) => (
-                      <div
-                        key={doc.id}
-                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-lg border hover:shadow-md transition-shadow cursor-pointer group bg-card gap-3"
-                        onClick={() => openDocument(doc.id)}
-                      >
-                        <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                          <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-medium group-hover:text-primary transition-colors line-clamp-1">
-                              {doc.title}
-                            </h3>
-                            <p className="text-sm text-muted-foreground line-clamp-1">
-                              {doc.content || 'Empty document'}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4 sm:gap-6 text-sm text-muted-foreground pl-8 sm:pl-0">
-                          {doc.collaborators.length > 0 && (
-                            <div className="flex items-center gap-1">
-                              <Users className="h-4 w-4" />
-                              <span className="hidden sm:inline">{doc.collaborators.length}</span>
-                              <span className="sm:hidden">{doc.collaborators.length} collaborator{doc.collaborators.length !== 1 ? 's' : ''}</span>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{formatDate(doc.lastEditedAt)}</span>
-                          </div>
-                        </div>
+              {/* Events */}
+              <div className="px-6 py-4 space-y-3">
+                {scheduleEvents.map((event) => (
+                  <div key={event.id} className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
+                    <div className="flex-shrink-0 w-1 h-12 bg-purple-500 rounded-full"></div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-medium text-gray-900 mb-1">{event.title}</h3>
+                      <p className="text-xs text-gray-500">
+                        {event.startTime} to {event.endTime}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="flex -space-x-2">
+                        {event.collaborators.map((avatar, idx) => (
+                          <img
+                            key={idx}
+                            src={avatar}
+                            alt="Collaborator"
+                            className="w-6 h-6 rounded-full border-2 border-white"
+                            onError={(e) => {
+                              e.currentTarget.src = 'https://i.pravatar.cc/150?img=1'
+                            }}
+                          />
+                        ))}
                       </div>
-                    ))}
+                      <button className="p-1 hover:bg-gray-100 rounded transition-colors ml-2">
+                        <MoreVertical size={14} className="text-gray-400" />
+                      </button>
+                    </div>
                   </div>
-                )
-              )}
+                ))}
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div className="bg-white rounded-xl border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <StickyNote size={20} className="text-gray-600" />
+                  <h2 className="text-lg font-semibold text-gray-900">Notes</h2>
+                </div>
+              </div>
+
+              <div className="px-6 py-4 space-y-4">
+                {notes.map((note) => (
+                  <div key={note.id} className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={note.checked}
+                      onChange={() => {}}
+                      className="mt-1 w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-medium text-gray-900 mb-1">{note.title}</h3>
+                      <p className="text-xs text-gray-500 line-clamp-2">{note.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+        </main>
+      </div>
+    </div>
   )
 }
