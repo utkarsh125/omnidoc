@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppSidebar } from "@/components/app-sidebar"
-import { Search, Bell, Plus, Share2, Clock, CircleCheck, CircleDashed, MoreVertical, CalendarDays, StickyNote, ChevronDown } from 'lucide-react'
+import { Search, Bell, Plus, Clock, CircleCheck, CircleDashed, ChevronDown, FileText, Users } from 'lucide-react'
 
 interface Document {
   id: string
@@ -21,31 +21,6 @@ interface Document {
   }>
 }
 
-interface Task {
-  id: number
-  header: string
-  type: string
-  status: string
-  target: string
-  limit: string
-  reviewer: string
-}
-
-interface ScheduleEvent {
-  id: number
-  title: string
-  startTime: string
-  endTime: string
-  day: number
-  collaborators: string[]
-}
-
-interface Note {
-  id: number
-  title: string
-  description: string
-  checked: boolean
-}
 
 export default function Page() {
   const router = useRouter()
@@ -53,59 +28,6 @@ export default function Page() {
   const [loading, setLoading] = useState(true)
   const [userName, setUserName] = useState('John')
   const [currentDate, setCurrentDate] = useState('')
-
-  // Mock data for tasks
-  const [tasks, setTasks] = useState<Task[]>([])
-
-  // Mock schedule data
-  const scheduleEvents: ScheduleEvent[] = [
-    {
-      id: 1,
-      title: 'Kickoff Meeting',
-      startTime: '01:00 PM',
-      endTime: '02:30 PM',
-      day: 17,
-      collaborators: ['https://i.pravatar.cc/150?img=1', 'https://i.pravatar.cc/150?img=2']
-    },
-    {
-      id: 2,
-      title: 'Create Wordpress website for event Registration',
-      startTime: '04:00 PM',
-      endTime: '02:30 PM',
-      day: 17,
-      collaborators: ['https://i.pravatar.cc/150?img=3', 'https://i.pravatar.cc/150?img=4']
-    },
-    {
-      id: 3,
-      title: 'Create User flow for hotel booking',
-      startTime: '05:00 PM',
-      endTime: '02:30 PM',
-      day: 17,
-      collaborators: ['https://i.pravatar.cc/150?img=5', 'https://i.pravatar.cc/150?img=6']
-    }
-  ]
-
-  // Mock notes data
-  const notes: Note[] = [
-    {
-      id: 1,
-      title: 'Landing Page For Website',
-      description: 'To get started on a landing page, could you provide a bit more detail about its purpose?',
-      checked: false
-    },
-    {
-      id: 2,
-      title: 'Fixing icons with dark backgrounds',
-      description: 'Use icons that are easily recognizable and straightforward. Avoid overly complex designs that might confuse users.',
-      checked: false
-    },
-    {
-      id: 3,
-      title: 'Discussion regarding userflow improvement',
-      description: "What's the main goal of the landing page? (e.g., lead generation, product )",
-      checked: false
-    }
-  ]
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -120,18 +42,7 @@ export default function Page() {
     setCurrentDate(now.toLocaleDateString('en-US', options))
     
     fetchDocuments()
-    loadTasksData()
   }, [])
-
-  const loadTasksData = async () => {
-    try {
-      const response = await fetch('/dashboard/data.json')
-      const data = await response.json()
-      setTasks(data.slice(0, 3)) // Show first 3 tasks
-    } catch (error) {
-      console.error('Error loading tasks:', error)
-    }
-  }
 
   const fetchDocuments = async () => {
     try {
@@ -190,21 +101,13 @@ export default function Page() {
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'done':
-        return 'bg-blue-500'
-      case 'in process':
-        return 'bg-green-500'
-      default:
-        return 'bg-purple-500'
-    }
-  }
-
-  const getWeekDays = () => {
-    const days = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
-    const dates = [15, 16, 17, 18, 19, 20, 14]
-    return days.map((day, index) => ({ day, date: dates[index] }))
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    })
   }
 
   return (
@@ -242,11 +145,11 @@ export default function Page() {
                 <span className="absolute top-1 right-1 w-2 h-2 bg-purple-500 rounded-full"></span>
               </button>
               <img
-                src="https://i.pravatar.cc/150?img=12"
+                src="/3d_2.png"
                 alt="User avatar"
                 className="w-9 h-9 rounded-full cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
                 onError={(e) => {
-                  e.currentTarget.src = 'https://i.pravatar.cc/150?img=1'
+                  e.currentTarget.src = ''
                 }}
               />
             </div>
@@ -280,180 +183,116 @@ export default function Page() {
             </div>
           </div>
 
-          {/* Projects Section */}
-          <div className="bg-white rounded-xl border border-gray-200 mb-6">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          {/* Documents Section */}
+          <div className="bg-white rounded-xl border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-gray-900">My Projects</h2>
-                <button className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-1">
-                  This Week
-                  <ChevronDown size={14} />
-                </button>
+                <FileText size={20} className="text-gray-600" />
+                <h2 className="text-lg font-semibold text-gray-900">My Documents</h2>
               </div>
-              <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                See All
+              <button 
+                onClick={() => router.push('/collaborative')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm"
+              >
+                <Plus size={18} />
+                New Document
               </button>
             </div>
 
-            {/* Table */}
+            {/* Document Table */}
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50">
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Task Name
+                      Document Title
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                      Last Edited
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                      Collaborators
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Assign
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                      Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {loading ? (
                     <tr>
-                      <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
-                        Loading...
+                      <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                        Loading documents...
                       </td>
                     </tr>
-                  ) : tasks.length === 0 ? (
+                  ) : documents.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
-                        No tasks available
+                      <td colSpan={4} className="px-6 py-12 text-center">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <FileText size={48} className="text-gray-300" />
+                          <p className="text-gray-500">No documents yet</p>
+                          <button 
+                            onClick={() => router.push('/collaborative')}
+                            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm"
+                          >
+                            Create your first document
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ) : (
-                    tasks.map((task) => (
-                      <tr key={task.id} className="hover:bg-gray-50 transition-colors">
+                    documents.map((doc) => (
+                      <tr 
+                        key={doc.id} 
+                        className="hover:bg-gray-50 transition-colors cursor-pointer"
+                        onClick={() => openDocument(doc.id)}
+                      >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2 text-gray-400">
-                              <span className="text-sm">{task.target}</span>
-                              <span className="text-sm">{task.limit}</span>
+                            <FileText size={18} className="text-blue-600 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {doc.title || 'Untitled Document'}
+                              </p>
+                              <p className="text-xs text-gray-500 truncate md:hidden">
+                                {formatDate(doc.lastEditedAt || doc.updatedAt)}
+                              </p>
                             </div>
-                            <span className="text-sm font-medium text-gray-900">{task.header}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <img
-                              src={`https://i.pravatar.cc/150?img=${task.id}`}
-                              alt={task.reviewer}
-                              className="w-6 h-6 rounded-full"
-                              onError={(e) => {
-                                e.currentTarget.src = 'https://i.pravatar.cc/150?img=1'
-                              }}
-                            />
-                            <span className="text-sm text-gray-700">{task.reviewer}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(task.status)}`}>
-                            {task.status}
+                        <td className="px-6 py-4 hidden md:table-cell">
+                          <span className="text-sm text-gray-700">
+                            {formatDate(doc.lastEditedAt || doc.updatedAt)}
                           </span>
+                        </td>
+                        <td className="px-6 py-4 hidden lg:table-cell">
+                          {doc.collaborators && doc.collaborators.length > 0 ? (
+                            <div className="flex items-center gap-2">
+                              <Users size={16} className="text-gray-400" />
+                              <span className="text-sm text-gray-700">
+                                {doc.collaborators.length} {doc.collaborators.length === 1 ? 'collaborator' : 'collaborators'}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-gray-400">No collaborators</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              openDocument(doc.id)
+                            }}
+                            className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+                          >
+                            Open
+                          </button>
                         </td>
                       </tr>
                     ))
                   )}
                 </tbody>
               </table>
-            </div>
-          </div>
-
-          {/* Bottom Section - Schedule and Notes */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Schedule */}
-            <div className="bg-white rounded-xl border border-gray-200">
-              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CalendarDays size={20} className="text-gray-600" />
-                  <h2 className="text-lg font-semibold text-gray-900">Schedule</h2>
-                </div>
-                <button className="p-1 hover:bg-gray-100 rounded transition-colors">
-                  <MoreVertical size={18} className="text-gray-600" />
-                </button>
-              </div>
-
-              {/* Week Days */}
-              <div className="px-6 py-4 border-b border-gray-200">
-                <div className="grid grid-cols-7 gap-2">
-                  {getWeekDays().map((item, index) => (
-                    <div
-                      key={index}
-                      className={`text-center py-2 rounded-lg ${
-                        item.date === 17
-                          ? 'bg-purple-500 text-white'
-                          : 'hover:bg-gray-100'
-                      }`}
-                    >
-                      <div className="text-xs font-medium">{item.day}</div>
-                      <div className="text-sm font-semibold mt-1">{item.date}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Events */}
-              <div className="px-6 py-4 space-y-3">
-                {scheduleEvents.map((event) => (
-                  <div key={event.id} className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
-                    <div className="flex-shrink-0 w-1 h-12 bg-purple-500 rounded-full"></div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium text-gray-900 mb-1">{event.title}</h3>
-                      <p className="text-xs text-gray-500">
-                        {event.startTime} to {event.endTime}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="flex -space-x-2">
-                        {event.collaborators.map((avatar, idx) => (
-                          <img
-                            key={idx}
-                            src={avatar}
-                            alt="Collaborator"
-                            className="w-6 h-6 rounded-full border-2 border-white"
-                            onError={(e) => {
-                              e.currentTarget.src = 'https://i.pravatar.cc/150?img=1'
-                            }}
-                          />
-                        ))}
-                      </div>
-                      <button className="p-1 hover:bg-gray-100 rounded transition-colors ml-2">
-                        <MoreVertical size={14} className="text-gray-400" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Notes */}
-            <div className="bg-white rounded-xl border border-gray-200">
-              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <StickyNote size={20} className="text-gray-600" />
-                  <h2 className="text-lg font-semibold text-gray-900">Notes</h2>
-                </div>
-              </div>
-
-              <div className="px-6 py-4 space-y-4">
-                {notes.map((note) => (
-                  <div key={note.id} className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={note.checked}
-                      onChange={() => {}}
-                      className="mt-1 w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium text-gray-900 mb-1">{note.title}</h3>
-                      <p className="text-xs text-gray-500 line-clamp-2">{note.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </main>

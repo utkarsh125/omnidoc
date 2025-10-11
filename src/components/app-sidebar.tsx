@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { LayoutDashboard, FileText, MessageSquare, File, Receipt, Settings, HelpCircle, LogOut } from 'lucide-react'
+import { LayoutDashboard, File, LogOut } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import axios from "axios"
 
@@ -18,24 +18,9 @@ const navMainData: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
-    title: "My Task",
-    url: "/dashboard",
-    icon: FileText,
-  },
-  {
-    title: "Chats",
-    url: "#",
-    icon: MessageSquare,
-  },
-  {
     title: "Documents",
     url: "/dashboard",
     icon: File,
-  },
-  {
-    title: "Receipts",
-    url: "#",
-    icon: Receipt,
   },
 ]
 
@@ -105,7 +90,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<'aside'>) {
     <aside className="w-64 bg-white border-r border-gray-200 flex flex-col" {...props}>
       {/* Logo */}
       <div className="px-6 py-5 border-b border-gray-200">
-        <h1 className="text-2xl font-bold text-gray-900">Mondays</h1>
+        <h1 className="text-2xl font-semibold text-blue-500">omnitype.</h1>
       </div>
 
       {/* Navigation */}
@@ -163,28 +148,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<'aside'>) {
 
       {/* Bottom Section */}
       <div className="border-t border-gray-200">
-        <button className="w-full flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-gray-100 transition-colors">
-          <Settings size={20} />
-          <span className="text-sm font-medium">Settings</span>
-        </button>
-        <button className="w-full flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-gray-100 transition-colors">
-          <HelpCircle size={20} />
-          <span className="text-sm font-medium">Help & Support</span>
-          <span className="ml-auto bg-green-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
-            8
-          </span>
-        </button>
-        
         {/* User Profile */}
         {user && (
-          <div className="px-4 py-4 border-t border-gray-200">
+          <div className="px-4 py-4">
             <div className="flex items-center gap-3">
               <img
-                src={`https://i.pravatar.cc/150?img=8`}
+                src="/3d_2.png"
                 alt={user.name}
                 className="w-10 h-10 rounded-full"
                 onError={(e) => {
-                  e.currentTarget.src = 'https://i.pravatar.cc/150?img=1'
+                  e.currentTarget.src = ''
                 }}
               />
               <div className="flex-1 min-w-0">
