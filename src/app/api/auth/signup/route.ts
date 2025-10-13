@@ -45,17 +45,21 @@ export async function POST(request: NextRequest){
 
 
         const avatars = ["vibrent_2.png", "vibrent_6.png", "vibrent_7.png", "vibrent_8.png", "vibrent_9.png", "vibrent_27.png"];
+        const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
+
         //create user
         const user = await prisma.user.create({
             data: {
                 name,
                 email,
                 password: hashedPassword,
+                avatar: randomAvatar,
             },
             select: {
                 id: true,
                 name: true,
                 email: true,
+                avatar: true,
             }
         })
 

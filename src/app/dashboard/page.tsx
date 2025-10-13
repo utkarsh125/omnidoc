@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { SpotlightButton } from '@/components/ui/spotlight-button';
 import { Plus, DotsThreeVertical, Trash, PaperPlaneTilt, DotsThreeVerticalIcon, DotsThreeCircleIcon, PlusIcon } from '@phosphor-icons/react';
+import Image from 'next/image';
 
 interface User {
   id: string;
   name: string;
   email: string;
+  avatar: string;
 }
 
 interface Collaborator {
@@ -120,9 +122,12 @@ export default function Dashboard() {
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           {/* User Avatar */}
-          <div className="w-12 h-12 bg-blue-300 rounded-full flex items-center justify-center text-white font-semibold">
-            {user ? getInitials(user.name) : 'U'}
-          </div>
+          
+          <Image src={user?.avatar || '/vibrent_2.png'} width={48}
+            height={48}
+            className="rounded-full" alt={'User avatar'} />
+            
+          
           <div>
             <h1 className="text-5xl font-regular text-gray-900">
               {getGreeting()}, {user?.name || 'User'}...
