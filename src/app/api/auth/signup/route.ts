@@ -42,7 +42,9 @@ export async function POST(request: NextRequest){
         //Hash password
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
-    
+
+
+        const avatars = ["vibrent_2.png", "vibrent_6.png", "vibrent_7.png", "vibrent_8.png", "vibrent_9.png", "vibrent_27.png"];
         //create user
         const user = await prisma.user.create({
             data: {
