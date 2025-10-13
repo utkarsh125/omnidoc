@@ -1,17 +1,12 @@
 import type { Metadata } from "next";
-import { Inter, Poppins } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 
-const inter = Inter({
-  variable: "--font-sans",
-  subsets: ["latin"],
-});
-
 const poppins = Poppins({
-  variable: "--font-heading",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -30,7 +25,21 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className={`${inter.variable} ${poppins.variable} antialiased`}>
+      <body 
+        className={`${poppins.className} antialiased min-h-screen`}
+        style={{
+          background: `
+            linear-gradient(
+              to bottom,
+              rgba(255, 255, 255, 1) 0%,
+              rgba(219, 234, 254, 0.5) 30%,
+              rgba(219, 234, 254, 0.8) 70%,
+              rgba(219, 234, 254, 1) 100%
+            )
+          `,
+          backgroundAttachment: 'fixed'
+        }}
+      >
         <ThemeProvider defaultTheme="dark">
           {children}
         </ThemeProvider>

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from 'next/link'
-import { IconFile, IconLogout, IconSparkles } from '@tabler/icons-react'
+import { IconLayoutDashboard, IconFile, IconLogout, IconSparkles } from '@tabler/icons-react'
 import { useRouter, usePathname } from 'next/navigation'
 import axios from "axios"
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,11 @@ interface NavItem {
 }
 
 const navMainData: NavItem[] = [
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: IconLayoutDashboard,
+  },
   {
     title: "Documents",
     url: "/documents",

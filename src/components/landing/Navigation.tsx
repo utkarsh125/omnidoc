@@ -35,7 +35,7 @@ export function Navigation() {
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <Button asChild>
-              <Link href="/documents">Get Started</Link>
+              <Link href="/dashboard">Get Started</Link>
             </Button>
           </div>
         </div>

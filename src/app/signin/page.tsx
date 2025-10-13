@@ -37,7 +37,7 @@ export default function SignInPage() {
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.user));
-        router.push('/documents');
+        router.push('/dashboard');
       }
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.response?.data?.message || "Failed to sign in";
@@ -63,7 +63,7 @@ export default function SignInPage() {
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.user));
         setTimeout(() => {
-          router.push('/documents');
+          router.push('/dashboard');
         }, 1000);
       }
     } catch (err: any) {
