@@ -6,6 +6,7 @@ import axios from 'axios';
 import { SpotlightButton } from '@/components/ui/spotlight-button';
 import { Plus, DotsThreeVertical, Trash, PaperPlaneTilt, DotsThreeVerticalIcon, DotsThreeCircleIcon, PlusIcon } from '@phosphor-icons/react';
 import Image from 'next/image';
+import AvatarSelector from '@/components/AvatarSelector';
 
 interface User {
   id: string;
@@ -37,6 +38,7 @@ export default function Dashboard() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [showAvatarSelector, setShowAvatarSelector] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -104,6 +106,23 @@ export default function Dashboard() {
     return "Good Evening";
   };
 
+  const handleAvatarSelector = async (avatar: string ) => {
+    try {
+      
+      const response = await axios.patch("/api/auth/user-details", 
+        { avatar},
+        { withCredentials: true}
+      )
+
+      if(response.data){
+        setUser(response.data);
+        setShowAvatarSelector(false);
+      }
+    } catch (error) {
+      console.error("Error updating avatar: ",error);
+    }
+  }
+
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
@@ -122,11 +141,21 @@ export default function Dashboard() {
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           {/* User Avatar */}
-          
-          <Image src={user?.avatar || '/vibrent_2.png'} width={48}
-            height={48}
-            className="rounded-full" alt={'User avatar'} />
-            
+          <div 
+            onClick={() => setShowAvatarSelector(true)}
+            className="cursor-pointer hover:scale-110 transition-all duration-300 relative group"
+          >
+            <Image 
+              src={user?.avatar ? `/${user.avatar}` : '/vibrent_2.png'} 
+              width={48}
+              height={48}
+              className="rounded-full" 
+              alt="User avatar" 
+            />
+            <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <span className="text-white text-xs font-semibold">Edit</span>
+            </div>
+          </div>
           
           <div>
             <h1 className="text-5xl font-regular text-gray-900">
@@ -241,6 +270,14 @@ export default function Dashboard() {
           }}
         />
       </div>
+
+      {showAvatarSelector && (
+        <AvatarSelector
+          currentAvatar={user?.avatar || 'vibrent_2.png'}
+          onAvatarChange={handleAvatarSelector}
+          onClose={() => setShowAvatarSelector(false)}
+        />
+      )}
     </div>
   );
 }

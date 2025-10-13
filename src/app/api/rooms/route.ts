@@ -1,5 +1,5 @@
 import { PrismaClient } from "@/generated/prisma";
-import { getCurrentUserIdFromRequest } from "@/lib/auth";
+import { getCurrentUserIdFromRequest, createAuthErrorResponse } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 
@@ -14,7 +14,13 @@ export async function POST(request: NextRequest){
         const { name, documentId } = await request.json();
         console.log('Received request with:', { name, documentId });
         
-        const userId = getCurrentUserIdFromRequest(request);
+        const authResult = getCurrentUserIdFromRequest(request);
+        
+        if (!authResult.userId) {
+            return createAuthErrorResponse(authResult);
+        }
+        
+        const userId = authResult.userId;
         console.log('Authenticated userId:', userId);
 
         //validate document if provided

@@ -1,5 +1,5 @@
 import { PrismaClient } from "@/generated/prisma";
-import { getCurrentUserIdFromRequest } from "@/lib/auth";
+import { getCurrentUserIdFromRequest, createAuthErrorResponse } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
@@ -11,7 +11,13 @@ export async function POST(request: NextRequest){
 
         const { shareLink, roomCode, email } = await request.json();
 
-        const userId = getCurrentUserIdFromRequest(request);
+        const authResult = getCurrentUserIdFromRequest(request);
+        
+        if (!authResult.userId) {
+            return createAuthErrorResponse(authResult);
+        }
+        
+        const userId = authResult.userId;
 
         //find room by either shareLink or roomCode
         const room = await prisma.room.findFirst({

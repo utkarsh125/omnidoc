@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@/generated/prisma";
-import { getCurrentUserIdFromCookie, getCurrentUserIdFromRequest } from "@/lib/auth";
+import { getCurrentUserIdFromRequest, createAuthErrorResponse } from "@/lib/auth";
 
 const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest){
     try {
         
-        const userId = getCurrentUserIdFromRequest(request); 
+        const authResult = getCurrentUserIdFromRequest(request);
+        
+        if (!authResult.userId) {
+            return createAuthErrorResponse(authResult);
+        }
+        
+        const userId = authResult.userId;
 
         const documents = await prisma.document.findMany({
             where: {userId},
@@ -47,7 +53,13 @@ export async function POST(request: NextRequest){
 
     try {
         
-        const userId = getCurrentUserIdFromRequest(request);
+        const authResult = getCurrentUserIdFromRequest(request);
+        
+        if (!authResult.userId) {
+            return createAuthErrorResponse(authResult);
+        }
+        
+        const userId = authResult.userId;
 
         const { title = "Untitled", content = "", isPublic = false, tags = [] } = await request.json();
 

@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@/generated/prisma";
+import { getCurrentUserIdFromRequest, createAuthErrorResponse } from "@/lib/auth";
 
 const prisma = new PrismaClient();
 
@@ -51,5 +52,59 @@ export async function GET(request: NextRequest){
             {error: "Internal server error"},
             {status: 500}
         )
+    }
+}
+
+export async function PATCH(request: NextRequest){
+
+    try {
+        
+
+        const authResult = await getCurrentUserIdFromRequest(request);
+
+        if(!authResult.userId){
+
+            return createAuthErrorResponse(authResult);
+        }
+
+        const userId = authResult.userId;
+        const { avatar } = await request.json();
+
+        if(!avatar){
+            return NextResponse.json({
+                error: "Avatar is required",
+            }, {
+                status: 400
+            })
+        }
+
+        //update user avtart
+        const updatedUser = await prisma.user.update({
+            where: {
+                id: userId,
+            },
+            data: {
+                avatar,
+            }, 
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                avatar: true,
+            }
+        });
+
+        return NextResponse.json(updatedUser);
+    } catch (error) {
+
+        console.error("Error updating user avatar: ", error);
+        return NextResponse.json({
+            error: "Internal Server Error",
+        }, {
+             status: 500
+        })
+        
+    } finally {
+        await prisma.$disconnect();
     }
 }

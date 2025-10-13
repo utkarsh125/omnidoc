@@ -1,9 +1,15 @@
-//File to get shit like Current User ID and other auth related stuff
+//File to handle authentication and user identification
 
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
-export function getCurrentUserId(request: NextRequest): string {
+export type AuthResult = {
+  userId?: string;
+  error?: string;
+  errorType?: 'expired' | 'invalid' | 'missing';
+};
+
+export function getCurrentUserId(request: NextRequest): AuthResult {
   //get token from cookie or header
 
   const token =
@@ -11,7 +17,7 @@ export function getCurrentUserId(request: NextRequest): string {
     request.headers.get("Authorization")?.replace("Bearer ", "");
 
   if (!token) {
-    throw new Error("No token provided");
+    return { error: "No token provided", errorType: 'missing' };
   }
 
   try {
@@ -22,19 +28,25 @@ export function getCurrentUserId(request: NextRequest): string {
     const decoded = jwt.verify(token, process.env.JWT_SECRET) as any;
 
     if (!decoded || !decoded.userId) {
-      throw new Error("Invalid authentication token");
+      return { error: "Invalid authentication token", errorType: 'invalid' };
     }
-    return decoded.userId;
-  } catch (error) {
-    throw new Error("Invalid authentication token");
+    return { userId: decoded.userId };
+  } catch (error: any) {
+    // Distinguish between expired and invalid tokens
+    if (error.name === 'TokenExpiredError') {
+      return { error: "Token has expired", errorType: 'expired' };
+    } else if (error.name === 'JsonWebTokenError') {
+      return { error: "Invalid token", errorType: 'invalid' };
+    }
+    return { error: "Authentication failed", errorType: 'invalid' };
   }
 }
 
-export function getCurrentUserIdFromCookie(request: NextRequest): string {
+export function getCurrentUserIdFromCookie(request: NextRequest): AuthResult {
   const token = request.cookies.get("token")?.value;
 
   if (!token) {
-    throw new Error("No authentication token provided");
+    return { error: "No authentication token provided", errorType: 'missing' };
   }
 
   try {
@@ -42,16 +54,25 @@ export function getCurrentUserIdFromCookie(request: NextRequest): string {
       throw new Error("JWT_SECRET is not defined");
     }
 
-    const decoded =
-      jwt.verify(token, process.env.JWT_SECRET) || ("somesecretkeynig" as any);
-    return decoded.userId;
-  } catch (error) {
-    throw new Error("Invalid authentication token");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET) as any;
+    
+    if (!decoded || !decoded.userId) {
+      return { error: "Invalid authentication token", errorType: 'invalid' };
+    }
+    
+    return { userId: decoded.userId };
+  } catch (error: any) {
+    if (error.name === 'TokenExpiredError') {
+      return { error: "Token has expired", errorType: 'expired' };
+    } else if (error.name === 'JsonWebTokenError') {
+      return { error: "Invalid token", errorType: 'invalid' };
+    }
+    return { error: "Authentication failed", errorType: 'invalid' };
   }
 }
 
 // function that handles both cookie and header authentication
-export function getCurrentUserIdFromRequest(request: NextRequest): string {
+export function getCurrentUserIdFromRequest(request: NextRequest): AuthResult {
   // Try cookie first, then header
   const cookieToken = request.cookies.get("token")?.value;
   const headerToken = request.headers
@@ -61,7 +82,7 @@ export function getCurrentUserIdFromRequest(request: NextRequest): string {
   const token = cookieToken || headerToken;
 
   if (!token) {
-    throw new Error("No authentication token provided");
+    return { error: "No authentication token provided", errorType: 'missing' };
   }
 
   try {
@@ -72,11 +93,36 @@ export function getCurrentUserIdFromRequest(request: NextRequest): string {
     const decoded = jwt.verify(token, process.env.JWT_SECRET) as any;
 
     if (!decoded || !decoded.userId) {
-      throw new Error("Invalid authentication token");
+      return { error: "Invalid authentication token", errorType: 'invalid' };
     }
 
-    return decoded.userId;
-  } catch (error) {
-    throw new Error("Invalid authentication token");
+    return { userId: decoded.userId };
+  } catch (error: any) {
+    if (error.name === 'TokenExpiredError') {
+      return { error: "Token has expired", errorType: 'expired' };
+    } else if (error.name === 'JsonWebTokenError') {
+      return { error: "Invalid token", errorType: 'invalid' };
+    }
+    return { error: "Authentication failed", errorType: 'invalid' };
+  }
+}
+
+// function to create appropriate error responses
+export function createAuthErrorResponse(authResult: AuthResult): NextResponse {
+  if (authResult.errorType === 'expired') {
+    return NextResponse.json(
+      { error: "Session expired", code: "TOKEN_EXPIRED", message: "Please sign in again" },
+      { status: 401 }
+    );
+  } else if (authResult.errorType === 'missing') {
+    return NextResponse.json(
+      { error: "Not authenticated", code: "NO_TOKEN", message: "Please sign in to continue" },
+      { status: 401 }
+    );
+  } else {
+    return NextResponse.json(
+      { error: "Invalid authentication", code: "INVALID_TOKEN", message: "Please sign in again" },
+      { status: 401 }
+    );
   }
 }

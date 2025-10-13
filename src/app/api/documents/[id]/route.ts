@@ -1,5 +1,5 @@
 import { PrismaClient } from "@/generated/prisma";
-import { getCurrentUserIdFromRequest } from "@/lib/auth";
+import { getCurrentUserIdFromRequest, createAuthErrorResponse } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
@@ -11,7 +11,13 @@ export async function GET(
   try {
     console.log("Params: ", params);
 
-    const userId = getCurrentUserIdFromRequest(request);
+    const authResult = getCurrentUserIdFromRequest(request);
+    
+    if (!authResult.userId) {
+      return createAuthErrorResponse(authResult);
+    }
+    
+    const userId = authResult.userId;
     const documentId = params.id;
     console.log("User ID: ", userId);
     console.log("Document ID: ", documentId);
@@ -94,7 +100,13 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = getCurrentUserIdFromRequest(request);
+    const authResult = getCurrentUserIdFromRequest(request);
+    
+    if (!authResult.userId) {
+      return createAuthErrorResponse(authResult);
+    }
+    
+    const userId = authResult.userId;
     const {id: documentId} = await params;
     const updateData = await request.json();
 
@@ -208,8 +220,13 @@ export async function PATCH(
 
     try {
         
-
-        const userId = getCurrentUserIdFromRequest(request);
+        const authResult = getCurrentUserIdFromRequest(request);
+        
+        if (!authResult.userId) {
+            return createAuthErrorResponse(authResult);
+        }
+        
+        const userId = authResult.userId;
         const { id: documentId } = await params;
         const updateData = await request.json();
 
@@ -273,7 +290,13 @@ export async function DELETE(
 ) {
     try {
         
-        const userId = getCurrentUserIdFromRequest(request);
+        const authResult = getCurrentUserIdFromRequest(request);
+        
+        if (!authResult.userId) {
+            return createAuthErrorResponse(authResult);
+        }
+        
+        const userId = authResult.userId;
         const { id: documentId } = await params;
 
         //check if the usr has permission to delete doc

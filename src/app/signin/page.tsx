@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,15 @@ export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Check for session expiration or redirect parameters
+  useEffect(() => {
+    const expired = searchParams.get('expired');
+    if (expired === 'true') {
+      setError('Your session has expired. Please sign in again.');
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +46,10 @@ export default function SignInPage() {
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.user));
-        router.push('/dashboard');
+        
+        // Redirect to the original page or dashboard
+        const redirect = searchParams.get('redirect');
+        router.push(redirect || '/dashboard');
       }
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.response?.data?.message || "Failed to sign in";

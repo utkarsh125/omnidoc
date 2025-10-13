@@ -1,5 +1,5 @@
 import { PrismaClient } from "@/generated/prisma";
-import { getCurrentUserIdFromRequest } from "@/lib/auth";
+import { getCurrentUserIdFromRequest, createAuthErrorResponse } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
@@ -9,7 +9,13 @@ export async function GET(
   { params }: { params: { code: string } }
 ) {
   try {
-    const userId = getCurrentUserIdFromRequest(request);
+    const authResult = getCurrentUserIdFromRequest(request);
+    
+    if (!authResult.userId) {
+      return createAuthErrorResponse(authResult);
+    }
+    
+    const userId = authResult.userId;
     const code = params.code;
 
     // Try to find room by document ID first (for dashboard)

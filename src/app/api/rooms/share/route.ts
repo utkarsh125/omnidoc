@@ -1,5 +1,5 @@
 import { PrismaClient } from "@/generated/prisma";
-import { getCurrentUserIdFromRequest } from "@/lib/auth";
+import { getCurrentUserIdFromRequest, createAuthErrorResponse } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
@@ -9,7 +9,13 @@ export async function POST(request: NextRequest){
     try {
         
         const { roomCode, isPublic, allowedEmails } = await request.json();
-        const userId = getCurrentUserIdFromRequest(request);
+        const authResult = getCurrentUserIdFromRequest(request);
+        
+        if (!authResult.userId) {
+            return createAuthErrorResponse(authResult);
+        }
+        
+        const userId = authResult.userId;
 
         //check if user has permission to share this room
         const room = await prisma.room.findUnique({

@@ -64,11 +64,19 @@ export async function POST(request: NextRequest){
         })
 
         //generate JWT token for immediate login
+        if (!process.env.JWT_SECRET) {
+            return NextResponse.json({
+                error: 'Server configuration error'
+            }, {
+                status: 500
+            });
+        }
+        
         const token = jwt.sign({
             userId: user.id,
             email: user.email,
             name: user.name,
-        }, process.env.JWT_SECRET || 'somesecretkeynig', {
+        }, process.env.JWT_SECRET, {
             expiresIn: '7d'
         })
 
