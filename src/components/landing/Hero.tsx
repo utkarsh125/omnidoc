@@ -27,7 +27,7 @@ export function Hero() {
           </p>
           <div className="flex gap-4 justify-center">
             <Button asChild size="lg" className="px-8 py-6 text-lg rounded-full">
-              <Link href="/dashboard">Get Started Free</Link>
+              <Link href="/documents">Get Started Free</Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="px-8 py-6 text-lg rounded-full">
               <Link href="/signin">Sign In</Link>
