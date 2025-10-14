@@ -270,7 +270,7 @@ export default function Dashboard() {
         
 
         {/* Documents List */}
-        <DocumentList documents={documents} isLoading={isLoading} />
+        <DocumentList documents={documents} isLoading={isLoading} onRefresh={fetchDocuments}/>
 
         {/* Bottom Section */}
         <div className="absolute bottom-8 left-8 right-8 flex justify-between items-end">

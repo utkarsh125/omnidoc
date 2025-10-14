@@ -28,9 +28,10 @@ interface Document {
 interface DocumentListProps {
   documents: Document[];
   isLoading: boolean;
+  onRefresh?: () => void;
 }
 
-export default function DocumentList({ documents, isLoading }: DocumentListProps) {
+export default function DocumentList({ documents, isLoading, onRefresh }: DocumentListProps) {
   const router = useRouter();
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
 
@@ -49,8 +50,9 @@ export default function DocumentList({ documents, isLoading }: DocumentListProps
       {title: newTitle},
       {withCredentials: true}
     )
-    //refresh the doclist
-    router.push(`/dashboard`);
+    
+    onRefresh?.(); //optional chaining to check if onRefresh is defined
+    setOpenDropdownIndex(null);
   }
 
   const handleEdit = (documentId: string) => {
@@ -158,14 +160,14 @@ export default function DocumentList({ documents, isLoading }: DocumentListProps
           <div 
             key={doc.id}
             onClick={() => handleDocumentClick(doc.id)}
-            onMouseEnter={() => handleDocumentHover(index, true)}
-            onMouseLeave={() => handleDocumentHover(index, false)}
             className="flex items-center justify-between mx-5 cursor-pointer"
           >
             <div className="flex-1">
               <h3 
                 ref={(el) => { titleRefs.current[index] = el }}
                 data-document-title 
+                onMouseEnter={() => handleDocumentHover(index, true)}
+                onMouseLeave={() => handleDocumentHover(index, false)}
                 className="font-extralight cursor-pointer text-gray-800 text-lg"
               >
                 {doc.title || "Untitled Document"}
