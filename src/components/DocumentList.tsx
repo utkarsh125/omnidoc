@@ -5,6 +5,7 @@ import { DotsThreeVerticalIcon, PencilSimpleIcon, TrashIcon, TextTIcon } from '@
 import { useRouter } from 'next/navigation';
 import gsap from 'gsap';
 import { GSAPDropdownMenu } from '@/components/dropdown-menu';
+import { Modal } from '@/components/modal';
 import axios from 'axios';
 
 interface Collaborator {
@@ -35,25 +36,21 @@ export default function DocumentList({ documents, isLoading, onRefresh }: Docume
   const router = useRouter();
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
 
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<{id: string, title: string} | null>(null);
+
   const handleDocumentClick = (documentId: string) => {
     router.push(`/collaborative?document=${documentId}`);
   };
 
   const handleRename = async(documentId: string, currentTitle: string) => {
 
-    //show a modal to rename the document
-    //TODO: Add a modal instead of using prompt() in future
-    const newTitle = prompt("Enter new Title: ", currentTitle);
-    if(!newTitle) return;
+    setSelectedDoc({ id: documentId, title: currentTitle });
 
-    //call in the PUT request to update the docTitle
-    await axios.put(`/api/documents/${documentId}`, 
-      {title: newTitle},
-      {withCredentials: true}
-    )
-    
-    onRefresh?.(); //optional chaining to check if onRefresh is defined
+    setIsRenameModalOpen(true);
     setOpenDropdownIndex(null);
+
   }
 
   const handleEdit = (documentId: string) => {
@@ -61,17 +58,12 @@ export default function DocumentList({ documents, isLoading, onRefresh }: Docume
     setOpenDropdownIndex(null);
   };
 
-  const handleDelete = async (documentId: string) => {
-    //TODO: Add a confirmation modal instead of using confirm() in future
-    //show confirmation 
-    if(!confirm("Are you sure you want to delete this document?")) return;
+  const handleDelete = async (documentId: string, title: string) => {
 
-    //call the delete endpoint
-    await axios.delete(`/api/documents/${documentId}`, {withCredentials: true})
-
-    //refresh the doclist
-    onRefresh?.();
+    setSelectedDoc({ id: documentId, title: title });
+    setIsDeleteModalOpen(true);
     setOpenDropdownIndex(null);
+    
 
   };
 
@@ -231,7 +223,7 @@ export default function DocumentList({ documents, isLoading, onRefresh }: Docume
                     {
                       label: 'Delete',
                       icon: <TrashIcon weight="duotone" />,
-                      onClick: () => handleDelete(doc.id),
+                      onClick: () => handleDelete(doc.id, doc.title),
                       variant: 'danger'
                     }
                     ]}
@@ -242,6 +234,83 @@ export default function DocumentList({ documents, isLoading, onRefresh }: Docume
           </div>
         ))
       )}
+      {/* Modals */}
+      <Modal 
+        isOpen={isRenameModalOpen} 
+        onClose={() => setIsRenameModalOpen(false)}
+        title="Rename Document"
+      >
+        <input 
+          type="text"
+          defaultValue={""}
+          placeholder={selectedDoc?.title}
+          className="w-full border text-gray-700 p-2 rounded mb-4"
+          id="newTitle"
+        />
+        <div className="flex justify-end gap-2">
+          <button 
+            onClick={() => setIsRenameModalOpen(false)}
+            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={async () => {
+              const newTitle = (document.getElementById('newTitle') as HTMLInputElement).value;
+              if (!newTitle || !selectedDoc) return;
+              
+              try {
+                await axios.put(`/api/documents/${selectedDoc.id}`, 
+                  { title: newTitle },
+                  { withCredentials: true }
+                );
+                onRefresh?.();
+                setIsRenameModalOpen(false);
+              } catch (error) {
+                console.error('Error renaming document:', error);
+                alert('Failed to rename document');
+              }
+            }}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Rename
+          </button>
+        </div>
+      </Modal>
+
+      <Modal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Delete Document"
+      >
+        <p className="mb-4 text-gray-700">Are you sure you want to delete "{selectedDoc?.title}"?</p>
+        <div className="flex justify-end gap-2">
+          <button 
+            onClick={() => setIsDeleteModalOpen(false)}
+            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={async () => {
+              if (!selectedDoc) return;
+              try {
+                await axios.delete(`/api/documents/${selectedDoc.id}`, 
+                  { withCredentials: true }
+                );
+                onRefresh?.();
+                setIsDeleteModalOpen(false);
+              } catch (error) {
+                console.error('Error deleting document:', error);
+                alert('Failed to delete document');
+              }
+            }}
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            Delete
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }
