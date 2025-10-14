@@ -72,6 +72,7 @@ export default function DocumentList({ documents, isLoading, onRefresh }: Docume
     //refresh the doclist
     onRefresh?.();
     setOpenDropdownIndex(null);
+
   };
 
   const getInitials = (name: string) => {
