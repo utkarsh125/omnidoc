@@ -23,6 +23,7 @@ export function GSAPDropdownMenu({
   onClose, 
   items, 
   triggerRef 
+  
 }: GSAPDropdownMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const itemsRef = useRef<(HTMLButtonElement | null)[]>([]);

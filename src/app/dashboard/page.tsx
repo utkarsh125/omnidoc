@@ -35,7 +35,16 @@ interface Document {
 }
 
 export default function Dashboard() {
+  const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const cached = localStorage.getItem('userCache');
+    if (cached) {
+      setUser(JSON.parse(cached));
+    }
+    setMounted(true);
+  }, []);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -43,6 +52,7 @@ export default function Dashboard() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuIconRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
 
   useEffect(() => {
     fetchUserDetails();
@@ -56,6 +66,9 @@ export default function Dashboard() {
       });
       if (response.data) {
         setUser(response.data);
+
+        //caching user data in localStorage
+        localStorage.setItem('userCache', JSON.stringify(response.data));
       }
     } catch (error) {
       console.error("Error fetching user details: ", error);
@@ -106,6 +119,9 @@ export default function Dashboard() {
   const handleSignOut = async () => {
     try {
       await axios.post("/api/auth/signout", {}, { withCredentials: true });
+
+      //clear cache on sign out
+      localStorage.removeItem('userCache');
       router.push('/signin');
     } catch (error) {
       console.error("Error signing out: ", error);
@@ -145,6 +161,9 @@ export default function Dashboard() {
 
       if(response.data){
         setUser(response.data);
+
+        //update cache with new avatar
+        localStorage.setItem('userCache', JSON.stringify(response.data));
         setShowAvatarSelector(false);
       }
     } catch (error) {
@@ -174,13 +193,16 @@ export default function Dashboard() {
             onClick={() => setShowAvatarSelector(true)}
             className="cursor-pointer hover:scale-110 transition-all duration-300 relative group"
           >
-            <Image 
-              src={user?.avatar ? `/${user.avatar}` : '/vibrent_2.png'} 
-              width={48}
-              height={48}
-              className="rounded-full" 
-              alt="User avatar" 
-            />
+            {mounted && (
+              <Image 
+                src={user?.avatar ? `/${user.avatar}` : '/vibrent_2.png'} 
+                width={48}
+                height={48}
+                className="rounded-full" 
+                alt="User avatar"
+                priority
+              />
+            )}
             <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <span className="text-white text-xs font-semibold">Edit</span>
             </div>
@@ -211,16 +233,13 @@ export default function Dashboard() {
             isOpen={isMenuOpen}
             onClose={() => setIsMenuOpen(false)}
             items={[
-              {
-                label: 'Profile Settings',
-                icon: <UserCircleIcon weight="duotone" />,
-                onClick: () => console.log('Profile clicked')
-              },
-              {
-                label: 'Notifications',
-                icon: <BellIcon weight="duotone" />,
-                onClick: () => router.push('/notifications')
-              },
+              
+              //TODO: Add notifications later
+              // {
+              //   label: 'Notifications',
+              //   icon: <BellIcon weight="duotone" />,
+              //   onClick: () => router.push('/notifications')
+              // },
               {
                 label: 'Settings',
                 icon: <GearFineIcon weight="duotone" />,
