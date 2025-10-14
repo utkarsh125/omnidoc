@@ -107,6 +107,7 @@ export function GSAPDropdownMenu({
       {/* Dropdown Menu */}
       <div
         ref={menuRef}
+        onClick={(e) => e.stopPropagation()}
         className="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 min-w-[200px] z-50"
         style={{ transformOrigin: 'top right' }}
       >

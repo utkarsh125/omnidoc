@@ -158,13 +158,13 @@ export default function AvatarSelector({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-6">
-              <h2 ref={titleRef} className="text-2xl font-semibold">Choose Your Avatar</h2>
+              <h2 ref={titleRef} className="text-2xl font-semibold !text-gray-900">Choose Your Avatar</h2>
               <button 
                 ref={closeButtonRef}
                 onClick={handleClose} 
                 className="hover:bg-gray-100 rounded-full p-2 transition-colors"
               >
-                <XIcon size={24} />
+                <XIcon size={24} className="!text-gray-900"/>
               </button>
             </div>
             
@@ -179,7 +179,7 @@ export default function AvatarSelector({
                   className={`relative rounded-full overflow-hidden transition-all duration-200 ${
                     selectedAvatar === avatar 
                       ? 'ring-4 ring-blue-500' 
-                      : 'hover:ring-2 hover:ring-gray-300'
+                      : 'hover:ring-2 hover:ring-slate-500'
                   }`}
                 >
                   <Image 

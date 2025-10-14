@@ -4,10 +4,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { SpotlightButton } from '@/components/ui/spotlight-button';
-import { Plus, DotsThreeVertical, Trash, PaperPlaneTilt, DotsThreeVerticalIcon, DotsThreeCircleIcon, PlusIcon, TrashIcon, UserCircle, Bell, Gear, SignOut, UserCircleIcon, BellIcon, GearFineIcon, SignOutIcon } from '@phosphor-icons/react';
+import { DotsThreeCircleIcon, PlusIcon, TrashIcon, GearFineIcon, SignOutIcon } from '@phosphor-icons/react';
 import { GSAPDropdownMenu } from '@/components/dropdown-menu';
 import Image from 'next/image';
 import AvatarSelector from '@/components/AvatarSelector';
+import DocumentList from '@/components/DocumentList';
 
 interface User {
   id: string;
@@ -16,22 +17,20 @@ interface User {
   avatar: string;
 }
 
-interface Collaborator {
-  id: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  };
-}
-
 interface Document {
   id: string;
   title: string;
   content: string;
   description?: string;
   updatedAt: string;
-  collaborators: Collaborator[];
+  collaborators: Array<{
+    id: string;
+    user: {
+      id: string;
+      name: string;
+      email: string;
+    };
+  }>;
 }
 
 export default function Dashboard() {
@@ -112,10 +111,6 @@ export default function Dashboard() {
     }
   };
 
-  const handleDocumentClick = (documentId: string) => {
-    router.push(`/collaborative?document=${documentId}`);
-  };
-
   const handleSignOut = async () => {
     try {
       await axios.post("/api/auth/signout", {}, { withCredentials: true });
@@ -171,17 +166,6 @@ export default function Dashboard() {
     }
   }
 
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
-  };
-
-  const getCollaboratorColors = () => [
-    'bg-red-500',
-    'bg-blue-500', 
-    'bg-yellow-500',
-    'bg-green-500',
-    'bg-purple-500'
-  ];
 
   return (
     <div className="min-h-screen mt-52 mx-auto max-w-7xl p-6">
@@ -222,7 +206,7 @@ export default function Dashboard() {
             className="cursor-pointer hover:scale-110 transition-all duration-300"
           >
             <DotsThreeCircleIcon 
-              className='w-12 h-12'
+              className='w-12 h-12 !text-gray-900'
               style={{ 
                 transform: isMenuOpen ? 'rotate(90deg)' : 'rotate(0deg)',
                 transition: 'transform 0.3s ease'
@@ -259,7 +243,10 @@ export default function Dashboard() {
       {/* Main Content Area */}
       <div className=" rounded-2xl p-8 min-h-[600px] relative overflow-hidden">
         {/* New Document Button */}
-        <div className="flex justify-end mb-6">
+        <div className="flex justify-between mb-6">
+
+          {/* Document Name Header */}
+        <h2 className="text-3xl font-regular text-gray-800">Document Name</h2>
           <SpotlightButton 
             innerColor="rgb(215,240,255)"
             outerColor="rgb(100,180,255)"
@@ -280,57 +267,10 @@ export default function Dashboard() {
           </SpotlightButton>
         </div>
 
-        {/* Document Name Header */}
-        <h2 className="text-3xl font-regular text-gray-800 mb-6">Document Name</h2>
+        
 
         {/* Documents List */}
-        <div className="space-y-4">
-          {isLoading ? (
-            <div className="flex items-center tracking-tight justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-200"></div>
-            </div>
-          ) : documents.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">No documents yet. Create your first document!</p>
-            </div>
-          ) : (
-            documents.slice(0, 4).map((doc, index) => (
-              <div 
-                key={doc.id}
-                onClick={() => handleDocumentClick(doc.id)}
-                className="flex items-center justify-between mx-5 cursor-pointer"
-              >
-                <div className="flex-1">
-                  <h3 className="font-extralight text-gray-800 text-lg">
-                    {doc.title || "Untitled Document"}
-                  </h3>
-                </div>
-
-                {/* Collaborators */}
-                <div className="flex items-center gap-3">
-                  {doc.collaborators && doc.collaborators.length > 0 && (
-                    <div className="flex -space-x-2">
-                      {doc.collaborators.slice(0, 3).map((collaborator, collabIndex) => (
-                        <div
-                          key={collaborator.id}
-                          className={`w-8 h-8 rounded-full ${getCollaboratorColors()[collabIndex % getCollaboratorColors().length]} flex items-center justify-center text-white text-xs font-semibold`}
-                          title={collaborator.user.name}
-                        >
-                          {getInitials(collaborator.user.name)}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Document Options */}
-                  <div className='cursor-pointer hover:scale-110 hover:bg-slate-100 rounded-full transition-all duration-300'>
-                    <DotsThreeVerticalIcon className='w-5 h-5' />
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+        <DocumentList documents={documents} isLoading={isLoading} />
 
         {/* Bottom Section */}
         <div className="absolute bottom-8 left-8 right-8 flex justify-between items-end">
