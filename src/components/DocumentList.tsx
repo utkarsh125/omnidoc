@@ -42,6 +42,7 @@ export default function DocumentList({ documents, isLoading, onRefresh }: Docume
   const handleRename = async(documentId: string, currentTitle: string) => {
 
     //show a modal to rename the document
+    //TODO: Add a modal instead of using prompt() in future
     const newTitle = prompt("Enter new Title: ", currentTitle);
     if(!newTitle) return;
 
@@ -61,8 +62,15 @@ export default function DocumentList({ documents, isLoading, onRefresh }: Docume
   };
 
   const handleDelete = async (documentId: string) => {
-    // TODO: Implement delete functionality
-    console.log('Delete document:', documentId);
+    //TODO: Add a confirmation modal instead of using confirm() in future
+    //show confirmation 
+    if(!confirm("Are you sure you want to delete this document?")) return;
+
+    //call the delete endpoint
+    await axios.delete(`/api/documents/${documentId}`, {withCredentials: true})
+
+    //refresh the doclist
+    onRefresh?.();
     setOpenDropdownIndex(null);
   };
 
