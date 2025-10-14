@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { SpotlightButton } from '@/components/ui/spotlight-button';
-import { Plus, DotsThreeVertical, Trash, PaperPlaneTilt, DotsThreeVerticalIcon, DotsThreeCircleIcon, PlusIcon } from '@phosphor-icons/react';
+import { Plus, DotsThreeVertical, Trash, PaperPlaneTilt, DotsThreeVerticalIcon, DotsThreeCircleIcon, PlusIcon, TrashIcon, UserCircle, Bell, Gear, SignOut } from '@phosphor-icons/react';
+import { GSAPDropdownMenu } from '@/components/dropdown-menu';
 import Image from 'next/image';
 import AvatarSelector from '@/components/AvatarSelector';
 
@@ -39,6 +40,8 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuIconRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -74,6 +77,7 @@ export default function Dashboard() {
     }
   };
 
+
   const handleCreateDocument = async () => {
     setIsCreating(true);
     try {
@@ -98,6 +102,31 @@ export default function Dashboard() {
   const handleDocumentClick = (documentId: string) => {
     router.push(`/collaborative?document=${documentId}`);
   };
+
+  const handleSignOut = async () => {
+    try {
+      await axios.post("/api/auth/signout", {}, { withCredentials: true });
+      router.push('/signin');
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuIconRef.current && !menuIconRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMenuOpen]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -165,8 +194,46 @@ export default function Dashboard() {
         </div>
         
         {/* Options Menu */}
-        <div className="cursor-pointer hover:scale-110 transition-all duration-300">
-          <DotsThreeCircleIcon className='w-12 h-12'/>
+        <div className="relative">
+          <div 
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="cursor-pointer hover:scale-110 transition-all duration-300"
+          >
+            <DotsThreeCircleIcon 
+              className='w-12 h-12'
+              style={{ 
+                transform: isMenuOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                transition: 'transform 0.3s ease'
+              }}
+            />
+          </div>
+          <GSAPDropdownMenu
+            isOpen={isMenuOpen}
+            onClose={() => setIsMenuOpen(false)}
+            items={[
+              {
+                label: 'Profile Settings',
+                icon: <UserCircle weight="duotone" />,
+                onClick: () => console.log('Profile clicked')
+              },
+              {
+                label: 'Notifications',
+                icon: <Bell weight="duotone" />,
+                onClick: () => router.push('/notifications')
+              },
+              {
+                label: 'Settings',
+                icon: <Gear weight="duotone" />,
+                onClick: () => console.log('Settings clicked')
+              },
+              {
+                label: 'Sign Out',
+                icon: <SignOut weight="duotone" />,
+                onClick: handleSignOut,
+                variant: 'danger'
+              }
+            ]}
+          />
         </div>
       </div>
 
@@ -249,8 +316,9 @@ export default function Dashboard() {
         {/* Bottom Section */}
         <div className="absolute bottom-8 left-8 right-8 flex justify-between items-end">
           {/* Trash Icon */}
-          <div className="w-8 h-8 flex items-center justify-center">
-            <Trash size={20} weight="bold" className="text-gray-400" />
+          <div className="gap-2 flex items-center cursor-pointer hover:text-red-500 justify-center">
+            <TrashIcon size={35} weight="bold" className="text-black" />
+            <h3 className='text-2xl font-regular text-gray-800'>Trash</h3>
           </div>
         </div>
 
