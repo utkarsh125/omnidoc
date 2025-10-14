@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { SpotlightButton } from '@/components/ui/spotlight-button';
-import { Plus, DotsThreeVertical, Trash, PaperPlaneTilt, DotsThreeVerticalIcon, DotsThreeCircleIcon, PlusIcon, TrashIcon, UserCircle, Bell, Gear, SignOut } from '@phosphor-icons/react';
+import { Plus, DotsThreeVertical, Trash, PaperPlaneTilt, DotsThreeVerticalIcon, DotsThreeCircleIcon, PlusIcon, TrashIcon, UserCircle, Bell, Gear, SignOut, UserCircleIcon, BellIcon, GearFineIcon, SignOutIcon } from '@phosphor-icons/react';
 import { GSAPDropdownMenu } from '@/components/dropdown-menu';
 import Image from 'next/image';
 import AvatarSelector from '@/components/AvatarSelector';
@@ -213,22 +213,22 @@ export default function Dashboard() {
             items={[
               {
                 label: 'Profile Settings',
-                icon: <UserCircle weight="duotone" />,
+                icon: <UserCircleIcon weight="duotone" />,
                 onClick: () => console.log('Profile clicked')
               },
               {
                 label: 'Notifications',
-                icon: <Bell weight="duotone" />,
+                icon: <BellIcon weight="duotone" />,
                 onClick: () => router.push('/notifications')
               },
               {
                 label: 'Settings',
-                icon: <Gear weight="duotone" />,
+                icon: <GearFineIcon weight="duotone" />,
                 onClick: () => console.log('Settings clicked')
               },
               {
                 label: 'Sign Out',
-                icon: <SignOut weight="duotone" />,
+                icon: <SignOutIcon weight="duotone" />,
                 onClick: handleSignOut,
                 variant: 'danger'
               }
