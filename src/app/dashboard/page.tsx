@@ -9,6 +9,7 @@ import { GSAPDropdownMenu } from '@/components/dropdown-menu';
 import Image from 'next/image';
 import AvatarSelector from '@/components/AvatarSelector';
 import DocumentList from '@/components/DocumentList';
+import { SettingsModal } from '@/components/setting-modal';
 
 interface User {
   id: string;
@@ -49,6 +50,7 @@ export default function Dashboard() {
   const [isCreating, setIsCreating] = useState(false);
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const menuIconRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -227,7 +229,7 @@ export default function Dashboard() {
               {
                 label: 'Settings',
                 icon: <GearFineIcon weight="duotone" />,
-                onClick: () => console.log('Settings clicked')
+                onClick: () => setIsSettingsOpen(true)
               },
               {
                 label: 'Sign Out',
@@ -303,6 +305,13 @@ export default function Dashboard() {
           currentAvatar={user?.avatar || 'vibrent_2.png'}
           onAvatarChange={handleAvatarSelector}
           onClose={() => setShowAvatarSelector(false)}
+        />
+      )}
+
+      {isSettingsOpen && (
+        <SettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
         />
       )}
     </div>

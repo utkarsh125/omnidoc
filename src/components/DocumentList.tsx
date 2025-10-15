@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import gsap from 'gsap';
 import { GSAPDropdownMenu } from '@/components/dropdown-menu';
 import { Modal } from '@/components/modal';
+import { SpotlightButton } from '@/components/ui/spotlight-button';
 import axios from 'axios';
 
 interface Collaborator {
@@ -248,13 +249,7 @@ export default function DocumentList({ documents, isLoading, onRefresh }: Docume
           id="newTitle"
         />
         <div className="flex justify-end gap-2">
-          <button 
-            onClick={() => setIsRenameModalOpen(false)}
-            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
-          >
-            Cancel
-          </button>
-          <button 
+          <SpotlightButton 
             onClick={async () => {
               const newTitle = (document.getElementById('newTitle') as HTMLInputElement).value;
               if (!newTitle || !selectedDoc) return;
@@ -271,10 +266,14 @@ export default function DocumentList({ documents, isLoading, onRefresh }: Docume
                 alert('Failed to rename document');
               }
             }}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            innerColor="rgb(200,220,255)"
+            outerColor="rgb(100,150,255)"
+            hoverInnerColor="rgb(180,200,255)"
+            hoverOuterColor="rgb(80,130,255)"
+            className="text-sm"
           >
             Rename
-          </button>
+          </SpotlightButton>
         </div>
       </Modal>
 
@@ -285,13 +284,7 @@ export default function DocumentList({ documents, isLoading, onRefresh }: Docume
       >
         <p className="mb-4 text-gray-700">Are you sure you want to delete "{selectedDoc?.title}"?</p>
         <div className="flex justify-end gap-2">
-          <button 
-            onClick={() => setIsDeleteModalOpen(false)}
-            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
-          >
-            Cancel
-          </button>
-          <button 
+          <SpotlightButton 
             onClick={async () => {
               if (!selectedDoc) return;
               try {
@@ -305,10 +298,14 @@ export default function DocumentList({ documents, isLoading, onRefresh }: Docume
                 alert('Failed to delete document');
               }
             }}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            innerColor="rgb(255,200,200)"
+            outerColor="rgb(255,100,100)"
+            hoverInnerColor="rgb(255,180,180)"
+            hoverOuterColor="rgb(255,80,80)"
+            className="text-sm"
           >
             Delete
-          </button>
+          </SpotlightButton>
         </div>
       </Modal>
     </div>
