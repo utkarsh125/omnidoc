@@ -17,6 +17,16 @@ import {
   TextHTwo,
   TextHThree,
   CaretDown,
+  Image as ImageIcon,
+  TextHOneIcon,
+  TextHTwoIcon,
+  TextHThreeIcon,
+  TextItalicIcon,
+  TextBIcon,
+  TextUnderlineIcon,
+  TextStrikethroughIcon,
+  HighlighterIcon,
+  LinkSimpleIcon,
 } from '@phosphor-icons/react'
 import {
   DropdownMenu,
@@ -28,9 +38,10 @@ import {
 
 interface EditorBubbleMenuProps {
   editor: Editor
+  documentId?: string
 }
 
-export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
+export function EditorBubbleMenu({ editor, documentId }: EditorBubbleMenuProps) {
   const bubbleRef = useRef<HTMLDivElement>(null)
   const buttonsRef = useRef<(HTMLButtonElement | null)[]>([])
 
@@ -103,7 +114,7 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
       <div ref={bubbleRef} className="flex items-center gap-0.5 flex-wrap max-w-full">
         {/* Paragraph */}
         <button
-          ref={(el) => (buttonsRef.current[0] = el)}
+          ref={(el) => { buttonsRef.current[0] = el }}
           onClick={() => editor.chain().focus().setParagraph().run()}
           title="Paragraph"
           className={`p-2 rounded-lg transition-colors ${
@@ -115,95 +126,95 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
 
         {/* H1 */}
         <button
-          ref={(el) => (buttonsRef.current[1] = el)}
+          ref={(el) => { buttonsRef.current[1] = el }}
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
           title="Heading 1"
           className={`p-2 rounded-lg transition-colors ${
             editor.isActive('heading', { level: 1 }) ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-100'
           }`}
         >
-          <TextHOne size={18} weight="bold" />
+          <TextHOneIcon size={18} weight="bold" />
         </button>
 
         {/* H2 */}
         <button
-          ref={(el) => (buttonsRef.current[2] = el)}
+          ref={(el) => { buttonsRef.current[2] = el }}
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
           title="Heading 2"
           className={`p-2 rounded-lg transition-colors ${
             editor.isActive('heading', { level: 2 }) ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-100'
           }`}
         >
-          <TextHTwo size={18} weight="bold" />
+          <TextHTwoIcon size={18} weight="bold" />
         </button>
 
         {/* H3 */}
         <button
-          ref={(el) => (buttonsRef.current[3] = el)}
+          ref={(el) => { buttonsRef.current[3] = el }}
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
           title="Heading 3"
           className={`p-2 rounded-lg transition-colors ${
             editor.isActive('heading', { level: 3 }) ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-100'
           }`}
         >
-          <TextHThree size={18} weight="bold" />
+          <TextHThreeIcon size={18} weight="bold" />
         </button>
 
         <BubbleDivider />
 
         {/* Bold */}
         <button
-          ref={(el) => (buttonsRef.current[4] = el)}
+          ref={(el) => { buttonsRef.current[4] = el }}
           onClick={() => editor.chain().focus().toggleBold().run()}
           title="Bold (Ctrl+B)"
           className={`p-2 rounded-lg transition-colors ${
             editor.isActive('bold') ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-100'
           }`}
         >
-          <TextB size={18} weight="bold" />
+          <TextBIcon size={18} weight="bold" />
         </button>
 
         {/* Italic */}
         <button
-          ref={(el) => (buttonsRef.current[5] = el)}
+          ref={(el) => { buttonsRef.current[5] = el }}
           onClick={() => editor.chain().focus().toggleItalic().run()}
           title="Italic (Ctrl+I)"
           className={`p-2 rounded-lg transition-colors ${
             editor.isActive('italic') ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-100'
           }`}
         >
-          <TextItalic size={18} weight="bold" />
+          <TextItalicIcon size={18} weight="bold" />
         </button>
 
         {/* Underline */}
         <button
-          ref={(el) => (buttonsRef.current[6] = el)}
+          ref={(el) => { buttonsRef.current[6] = el }}
           onClick={() => editor.chain().focus().toggleUnderline().run()}
           title="Underline (Ctrl+U)"
           className={`p-2 rounded-lg transition-colors ${
             editor.isActive('underline') ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-100'
           }`}
         >
-          <TextUnderline size={18} weight="bold" />
+          <TextUnderlineIcon size={18} weight="bold" />
         </button>
 
         {/* Strikethrough */}
         <button
-          ref={(el) => (buttonsRef.current[7] = el)}
+          ref={(el) => { buttonsRef.current[7] = el }}
           onClick={() => editor.chain().focus().toggleStrike().run()}
           title="Strikethrough"
           className={`p-2 rounded-lg transition-colors ${
             editor.isActive('strike') ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-100'
           }`}
         >
-          <TextStrikethrough size={18} weight="bold" />
+          <TextStrikethroughIcon size={18} weight="bold" />
         </button>
 
         <BubbleDivider />
 
         {/* Code */}
         <button
-          ref={(el) => (buttonsRef.current[8] = el)}
+          ref={(el) => { buttonsRef.current[8] = el }}
           onClick={() => editor.chain().focus().toggleCode().run()}
           title="Code"
           className={`p-2 rounded-lg transition-colors ${
@@ -215,21 +226,21 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
 
         {/* Highlight */}
         <button
-          ref={(el) => (buttonsRef.current[9] = el)}
+          ref={(el) => { buttonsRef.current[9] = el }}
           onClick={() => editor.chain().focus().toggleHighlight().run()}
           title="Highlight"
           className={`p-2 rounded-lg transition-colors ${
             editor.isActive('highlight') ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-100'
           }`}
         >
-          <Highlighter size={18} weight="bold" />
+          <HighlighterIcon size={18} weight="bold" />
         </button>
 
         <BubbleDivider />
 
         {/* Link */}
         <button
-          ref={(el) => (buttonsRef.current[10] = el)}
+          ref={(el) => { buttonsRef.current[10] = el }}
           onClick={() => {
             const url = window.prompt('Enter URL:')
             if (url) {
@@ -241,7 +252,49 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
             editor.isActive('link') ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-100'
           }`}
         >
-          <LinkSimple size={18} weight="bold" />
+          <LinkSimpleIcon size={18} weight="bold" />
+        </button>
+
+        {/* Image Upload */}
+        <button
+          ref={(el) => { buttonsRef.current[11] = el }}
+          onClick={async () => {
+            const input = document.createElement('input')
+            input.type = 'file'
+            input.accept = 'image/*'
+            
+            input.onchange = async (e) => {
+              const file = (e.target as HTMLInputElement).files?.[0]
+              if (!file) return
+
+              try {
+                const formData = new FormData()
+                formData.append('file', file)
+                formData.append('documentId', documentId || '')
+
+                const response = await fetch('/api/images/upload', {
+                  method: 'POST',
+                  body: formData,
+                })
+
+                if (!response.ok) {
+                  throw new Error('Failed to upload image')
+                }
+
+                const data = await response.json()
+                editor.chain().focus().setImage({ src: data.fileUrl }).run()
+              } catch (error) {
+                console.error('Failed to upload image:', error)
+                alert('Failed to upload image')
+              }
+            }
+
+            input.click()
+          }}
+          title="Insert Image"
+          className="p-2 rounded-lg transition-colors text-gray-700 hover:bg-gray-100"
+        >
+          <ImageIcon size={18} weight="bold" />
         </button>
 
       </div>

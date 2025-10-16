@@ -15,9 +15,10 @@ import { EditorBubbleMenu } from './EditorBubbleMenu'
 interface EditorProps {
   initialContent?: string // JSON content from Tiptap editor
   onContentChange?: (json: string) => void // Callback with JSON
+  documentId?: string // Document ID for image uploads
 }
 
-export default function Editor({ initialContent, onContentChange }: EditorProps) {
+export default function Editor({ initialContent, onContentChange, documentId }: EditorProps) {
   // Parse JSON content 
   const parsedContent = useMemo(() => {
     if (!initialContent) return null
@@ -74,7 +75,7 @@ export default function Editor({ initialContent, onContentChange }: EditorProps)
     <div className="w-full max-w-5xl mx-auto light">
       <div className="rounded-xl !bg-white overflow-hidden" style={{ colorScheme: 'light' }}>
         {/* Bubble Menu - appears on text selection */}
-        {editor && <EditorBubbleMenu editor={editor} />}
+        {editor && <EditorBubbleMenu editor={editor} documentId={documentId} />}
 
         {/* Editor Content */}
         <div style={{ colorScheme: 'light', background: 'white' }}>

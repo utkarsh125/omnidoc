@@ -312,6 +312,7 @@ export default function DocumentEditorPage() {
               key={documentId || 'new'}
               initialContent={content}
               onContentChange={handleContentChange}
+              documentId={documentId || undefined}
             />
         </div>
         
