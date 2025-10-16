@@ -44,6 +44,7 @@ interface EditorBubbleMenuProps {
 export function EditorBubbleMenu({ editor, documentId }: EditorBubbleMenuProps) {
   const bubbleRef = useRef<HTMLDivElement>(null)
   const buttonsRef = useRef<(HTMLButtonElement | null)[]>([])
+  const [isOpen, setIsOpen] = useState(false);
 
   // GSAP animation when bubble menu appears
   useEffect(() => {
@@ -81,11 +82,37 @@ export function EditorBubbleMenu({ editor, documentId }: EditorBubbleMenuProps) 
     }
   }, [])
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if((e.ctrlKey || e.metaKey) && e.key === 'k'){
+        e.preventDefault();//stop browser goonin mechanism
+        setIsOpen((prev) => !prev);
+        // editor.view.updateState(editor.state);
+        editor.view.focus();
+      }
+
+      //close on escape key
+      if(e.key === 'Escape'){
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const BubbleDivider = () => <div className="w-px h-6 bg-gray-300 mx-1" />
 
   return (
     <BubbleMenu
       editor={editor}
+      shouldShow={({editor, view, state, from, to}) => {
+        //show if text is selected (default behavior) - needed.
+        const hasSelection = !state.selection.empty;
+
+        //show if CTRL+K was pressed (isOpen === true)
+        return hasSelection || isOpen;
+      }}
       tippyOptions={{
         duration: 0,
         placement: 'top',
