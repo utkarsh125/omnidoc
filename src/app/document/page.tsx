@@ -45,7 +45,7 @@ export default function DocumentEditorPage() {
         const savedContent = localStorage.getItem(LOCAL_STORAGE_KEY_UNSAVED)
         if (savedContent) {
           setContent(savedContent)
-          console.log('📂 Loaded unsaved draft from localStorage')
+          console.log('📂 Loaded unsaved draft from localStorage (JSON format)')
         }
         setIsLoading(false)
         return
@@ -62,14 +62,14 @@ export default function DocumentEditorPage() {
         setContent(document.content || '')
         setDocumentName(document.title || 'Untitled Document')
         setLastSaved(new Date(document.updatedAt))
-        console.log('📂 Loaded document from database')
+        console.log('📂 Loaded document from database (JSON format)')
       } catch (error) {
         console.error('❌ Failed to fetch document:', error)
         // Fallback to backup if exists
         const backup = localStorage.getItem(`document-${documentId}-backup`)
         if (backup) {
           setContent(backup)
-          console.log('📂 Loaded from localStorage backup')
+          console.log('📂 Loaded from localStorage backup (JSON format)')
         }
       } finally {
         setIsLoading(false)

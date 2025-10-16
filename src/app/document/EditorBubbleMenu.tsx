@@ -78,10 +78,29 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
       tippyOptions={{
         duration: 0,
         placement: 'top',
+        maxWidth: 'none',
+        popperOptions: {
+          modifiers: [
+            {
+              name: 'preventOverflow',
+              options: {
+                boundary: 'viewport',
+                padding: 8,
+              },
+            },
+            {
+              name: 'flip',
+              options: {
+                fallbackPlacements: ['bottom', 'top-start', 'top-end', 'bottom-start', 'bottom-end'],
+                padding: 8,
+              },
+            },
+          ],
+        },
       }}
-      className="bg-white shadow-xl rounded-xl flex items-center gap-0.5 p-1.5 border border-gray-200"
+      className="bg-white shadow-xl rounded-xl p-1.5 border border-gray-200 max-w-[95vw]"
     >
-      <div ref={bubbleRef} className="flex items-center gap-0.5">
+      <div ref={bubbleRef} className="flex items-center gap-0.5 flex-wrap max-w-full">
         {/* Paragraph */}
         <button
           ref={(el) => (buttonsRef.current[0] = el)}

@@ -80,7 +80,7 @@ model RoomUser {
 model Document {
   id String @id @default(uuid())
   title String
-  content String @db.Text  // Markdown content
+  content String @db.Text  // JSON content from Tiptap editor
   userId String  // Owner of the document
   
   // Document metadata
@@ -134,7 +134,7 @@ model DocumentImage {
 model DocumentVersion {
   id String @id @default(uuid())
   documentId String
-  content String @db.Text  // Markdown content snapshot
+  content String @db.Text  // JSON content snapshot from Tiptap editor
   versionNumber Int
   changeDescription String?  // Optional description of changes
   createdAt DateTime @default(now())
@@ -204,7 +204,7 @@ model DocumentTemplate {
   id String @id @default(uuid())
   name String
   description String?
-  content String @db.Text  // Markdown template content
+  content String @db.Text  // JSON template content from Tiptap editor
   category String?  // "blog", "meeting-notes", "api-docs", etc.
   isPublic Boolean @default(false)
   userId String?  // Creator of the template (null for system templates)
