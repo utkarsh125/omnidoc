@@ -6,10 +6,11 @@ const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log("Params: ", params);
+    const { id: documentId } = await params;
+    console.log("Params documentId: ", documentId);
 
     const authResult = getCurrentUserIdFromRequest(request);
     
@@ -18,7 +19,6 @@ export async function GET(
     }
     
     const userId = authResult.userId;
-    const documentId = params.id;
     console.log("User ID: ", userId);
     console.log("Document ID: ", documentId);
 

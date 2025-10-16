@@ -103,8 +103,8 @@ export default function Dashboard() {
       });
       
       if (response.data) {
-        // Navigate to the collaborative editor with the new document
-        router.push(`/collaborative?document=${response.data.id}`);
+        // Navigate to the document editor with the new document
+        router.push(`/document?document=${response.data.id}`);
       }
     } catch (error) {
       console.error("Error creating document: ", error);

@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { code: string } }
+  { params }: { params: Promise<{ code: string }> }
 ) {
   try {
     const authResult = getCurrentUserIdFromRequest(request);
@@ -16,7 +16,7 @@ export async function GET(
     }
     
     const userId = authResult.userId;
-    const code = params.code;
+    const { code } = await params;
 
     // Try to find room by document ID first (for dashboard)
     let room = await prisma.room.findFirst({
