@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import {
   DotsThreeCircleIcon,
+  FilePdfIcon,
   FloppyDiskBackIcon,
   PencilIcon,
   TrashIcon,
@@ -18,6 +19,7 @@ interface DocumentActionsProps {
   onDelete: () => void;
   showDelete?: boolean;
   documentTitle: string;
+  onExportPdf: () => void;
 }
 
 export function DocumentActions({
@@ -26,6 +28,7 @@ export function DocumentActions({
   onDelete,
   showDelete = true,
   documentTitle,
+  onExportPdf,
 }: DocumentActionsProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const menuIconRef = useRef<HTMLDivElement>(null);
@@ -61,12 +64,22 @@ export function DocumentActions({
     }
   };
 
+  const handleExportPdf = () => {
+    //open print dialog
+    window.print();
+  }
+
   const dropdownItems = [
     // {
     //   label: "Save",
     //   icon: <FloppyDiskBackIcon size={20} />,
     //   onClick: onSave,
     // },
+    {
+      label: "Export to PDF",
+      icon: <FilePdfIcon size={20} />,
+      onClick: handleExportPdf,
+    },
     {
       label: "Rename",
       icon: <PencilIcon size={20} />,

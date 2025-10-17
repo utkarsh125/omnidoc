@@ -1,0 +1,95 @@
+/* Print-specific styles */
+@media print {
+    /* Hide everything except printable content */
+    body * {
+      visibility: hidden;
+    }
+    
+    .printable-content,
+    .printable-content * {
+      visibility: visible;
+    }
+    
+    /* Position printable content at top of page */
+    .printable-content {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      padding: 20px;
+      background: white !important;
+      color: black !important;
+    }
+  
+    /* Page setup */
+    @page {
+      size: A4;
+      margin: 2cm;
+    }
+    
+    /* Hide document title on screen */
+    .document-title-print {
+      display: block !important;
+    }
+  
+    /* Typography */
+    .printable-content h1 {
+      font-size: 32pt;
+      margin-top: 0;
+      page-break-after: avoid;
+    }
+  
+    .printable-content h2 {
+      font-size: 24pt;
+      page-break-after: avoid;
+    }
+  
+    .printable-content h3 {
+      font-size: 18pt;
+      page-break-after: avoid;
+    }
+  
+    .printable-content p {
+      font-size: 11pt;
+      line-height: 1.5;
+      orphans: 3;
+      widows: 3;
+    }
+  
+    /* Avoid page breaks */
+    .printable-content h1,
+    .printable-content h2,
+    .printable-content h3,
+    .printable-content h4,
+    .printable-content h5,
+    .printable-content h6 {
+      page-break-after: avoid;
+    }
+  
+    .printable-content img {
+      max-width: 100%;
+      page-break-inside: avoid;
+    }
+  
+    .printable-content pre,
+    .printable-content blockquote {
+      page-break-inside: avoid;
+      border: 1px solid #ccc;
+      padding: 10px;
+    }
+  
+    /* Links */
+    .printable-content a {
+      text-decoration: underline;
+      color: #000;
+    }
+  
+    /* Show URL after links */
+    .printable-content a[href^="http"]:after {
+      content: " (" attr(href) ")";
+      font-size: 9pt;
+      color: #666;
+    }
+  }
