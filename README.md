@@ -1,36 +1,190 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Real-time Document Collaboration with CRDT
 
-## Getting Started
+## Flow Overview
 
-First, run the development server:
+1. **Document Creation**
+   - User creates a document
+   - Document is stored in PostgreSQL
+   - Each document has a unique ID
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+2. **Collaboration Methods**
+   - **Share Link**: Direct document access via URL
+   - **Room**: Real-time collaboration space
+     - Generated unique room code
+     - Multiple users can join
+     - Syncs document changes in real-time
+
+## How CRDT Works (Using Yjs)
+
+### 1. Basic Concept
+CRDT (Conflict-free Replicated Data Type) allows multiple users to edit the same document simultaneously without conflicts.
+
+```typescript
+// Each client has a local Yjs document
+const ydoc = new Y.Doc()
+const ytext = ydoc.getText('content')  // Shared text content
+
+// When user types "Hello"
+ytext.insert(0, 'Hello')
+
+// This change is automatically:
+// 1. Applied locally
+// 2. Synced with other clients
+// 3. Merged without conflicts
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Our Implementation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+#### WebSocket Server (websocket-server.ts)
+```typescript
+// Store active documents
+const documents = new Map<string, Y.Doc>()
+const connections = new Map<string, Set<WebSocket>>()
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+// When client connects
+wss.on('connection', (ws, req) => {
+    const roomCode = url.searchParams.get('room')
+    
+    // Create/get document for this room
+    if (!documents.has(roomCode)) {
+        const doc = new Y.Doc()
+        documents.set(roomCode, doc)
+        
+        // Handle document updates
+        doc.on('update', (update, origin) => {
+            // Broadcast changes to all clients
+            connections.get(roomCode)?.forEach(client => {
+                if (client !== origin) {
+                    client.send(update)
+                }
+            })
+        })
+    }
+})
+```
 
-## Learn More
+#### Client Side
+```typescript
+// Connect to room
+const ws = new WebSocket(`ws://localhost:4000?room=${roomCode}`)
+const ydoc = new Y.Doc()
 
-To learn more about Next.js, take a look at the following resources:
+// Sync document changes
+ws.on('message', (update) => {
+    Y.applyUpdate(ydoc, update)
+})
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+// Handle local changes
+ydoc.on('update', (update) => {
+    ws.send(update)
+})
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 3. CRDT Magic Explained
 
-## Deploy on Vercel
+#### How Conflicts are Resolved
+1. **Unique Identifiers**: Each change has a unique ID
+```typescript
+// Internal Yjs structure (simplified)
+type Change = {
+    id: string      // e.g., "user1-123"
+    clock: number   // Lamport timestamp
+    content: string // Actual change
+}
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+2. **Concurrent Changes**: Both changes are preserved
+```
+User A: "Hello|" (cursor at end)
+User B: "Hello|" (cursor at end)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+User A types "World"
+User B types "Everyone"
+
+Final Result: "HelloWorldEveryone"
+// Both changes are integrated based on their unique positions
+```
+
+3. **Order Preservation**: Changes are ordered using Lamport timestamps
+```typescript
+// Each operation gets a timestamp
+type Operation = {
+    client: string   // Client identifier
+    clock: number    // Logical time
+    changes: Change[]
+}
+```
+
+## Room vs Direct Share
+
+### Room-based Collaboration
+- Real-time sync via WebSocket
+- Multiple users can join via code
+- Active presence awareness
+- Temporary collaboration space
+
+### Direct Share
+- Document-level access
+- Permanent access (until revoked)
+- Asynchronous collaboration
+- Access via URL
+
+## Best Practices
+
+1. **Error Handling**
+```typescript
+ws.on('error', (error) => {
+    console.error('WebSocket error:', error)
+    // Implement reconnection logic
+})
+```
+
+2. **State Recovery**
+```typescript
+// After reconnection
+const state = Y.encodeStateVector(ydoc)
+ws.send(state)  // Request missing updates
+```
+
+3. **Presence Awareness**
+```typescript
+// Track active users
+const awareness = new Y.Awareness(ydoc)
+awareness.setLocalState({ user, cursor })
+```
+
+## Security Considerations
+
+1. **Room Access**
+   - Validate user permissions
+   - Expire inactive rooms
+   - Rate limit room creation
+
+2. **Data Integrity**
+   - Validate changes server-side
+   - Backup document states
+   - Handle malicious clients
+
+## Performance Tips
+
+1. **Debounce Updates**
+```typescript
+let timeout
+editor.on('change', () => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => {
+        // Send changes after 100ms of no typing
+        sendChanges()
+    }, 100)
+})
+```
+
+2. **Batch Processing**
+```typescript
+// Group multiple changes
+const transaction = ydoc.transact(() => {
+    ytext.insert(0, 'Hello')
+    ytext.insert(5, 'World')
+})
+```
+

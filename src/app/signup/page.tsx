@@ -1,7 +1,9 @@
 "use client";
+import AuthForm from "../components/AuthForm";
+import { Suspense } from "react";
 
-import AuthForm from "../signin/page"; 
-
-export default function SignInPage() {
-  return <AuthForm mode="signup" />;
+export default function SignUpPage() {
+  return (
+  <Suspense><AuthForm mode="signup" /></Suspense>
+  );
 }
