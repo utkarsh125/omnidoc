@@ -1,22 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { GradientBackground } from "@/components/auth/GradientBackground";
-import { Mail, Eye, EyeOff, Sparkles } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { Eye, EyeSlash, ArrowLeft } from "@phosphor-icons/react";
 
-export default function SignInPage() {
+gsap.registerPlugin(useGSAP);
+
+interface AuthFormProps {
+  mode: "signin" | "signup";
+}
+
+export default function AuthForm({ mode }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,11 +24,59 @@ export default function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Check for session expiration or redirect parameters
+  const containerRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
+  const submitButtonRef = useRef<HTMLButtonElement>(null);
+
+  const isSignUp = mode === "signup";
+
+  // Reset form when mode changes
   useEffect(() => {
-    const expired = searchParams.get('expired');
-    if (expired === 'true') {
-      setError('Your session has expired. Please sign in again.');
+    setEmail("");
+    setPassword("");
+    setName("");
+    setShowPassword(false);
+    setRememberMe(false);
+    setError("");
+  }, [mode]);
+
+  // Initial page load animation
+  useGSAP(() => {
+    if (!containerRef.current) return;
+
+    const tl = gsap.timeline();
+    
+    tl.from(containerRef.current, {
+      scale: 0.9,
+      opacity: 0,
+      duration: 0.6,
+      ease: "power3.out",
+    })
+    .from(formRef.current?.children || [], {
+      y: 20,
+      opacity: 0,
+      stagger: 0.1,
+      duration: 0.4,
+      ease: "power2.out",
+    }, "-=0.3");
+  }, { scope: containerRef, dependencies: [mode] });
+
+  // Error animation
+  useEffect(() => {
+    if (error && errorRef.current) {
+      gsap.fromTo(
+        errorRef.current,
+        { x: -10, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.3, ease: "back.out(1.7)" }
+      );
+    }
+  }, [error]);
+
+  useEffect(() => {
+    const expired = searchParams.get("expired");
+    if (expired === "true") {
+      setError("Your session has expired. Please sign in again.");
     }
   }, [searchParams]);
 
@@ -36,312 +84,299 @@ export default function SignInPage() {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-    
-    try {
-      const response = await axios.post("/api/auth/signin", {
-        email,
-        password,
-      });
 
-      if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
-        localStorage.setItem("user", JSON.stringify(response.data.user));
-        
-        // Redirect to the original page or dashboard
-        const redirect = searchParams.get('redirect');
-        router.push(redirect || '/dashboard');
+    try {
+      if (isSignUp) {
+        const response = await axios.post("/api/auth/signup", {
+          name,
+          email,
+          password,
+        });
+
+        if (response.status === 201) {
+          localStorage.setItem("token", response.data.token);
+          localStorage.setItem("user", JSON.stringify(response.data.user));
+
+          gsap.to(containerRef.current, {
+            scale: 0.95,
+            opacity: 0,
+            duration: 0.3,
+            ease: "power2.in",
+            onComplete: () => {
+              router.push("/dashboard");
+            },
+          });
+        }
+      } else {
+        const response = await axios.post("/api/auth/signin", {
+          email,
+          password,
+        });
+
+        if (response.data.token) {
+          if (rememberMe) {
+            localStorage.setItem("myapp-email", email);
+            localStorage.setItem("myapp-password", password);
+          } else {
+            localStorage.removeItem("myapp-email");
+            localStorage.removeItem("myapp-password");
+          }
+
+          localStorage.setItem("token", response.data.token);
+          localStorage.setItem("user", JSON.stringify(response.data.user));
+
+          gsap.to(containerRef.current, {
+            scale: 0.95,
+            opacity: 0,
+            duration: 0.3,
+            ease: "power2.in",
+            onComplete: () => {
+              const redirect = searchParams.get("redirect");
+              router.push(redirect || "/dashboard");
+            },
+          });
+        }
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.error || err.response?.data?.message || "Failed to sign in";
+      const errorMessage =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        `Failed to ${isSignUp ? "sign up" : "sign in"}`;
       setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent, name: string, signupEmail: string, signupPassword: string) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
-    
-    try {
-      const response = await axios.post("/api/auth/signup", {
-        name,
-        email: signupEmail,
-        password: signupPassword,
-      });
-
-      if (response.status === 201) {
-        localStorage.setItem("token", response.data.token);
-        localStorage.setItem("user", JSON.stringify(response.data.user));
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 1000);
+  // Load remembered credentials - only for signin
+  useEffect(() => {
+    if (!isSignUp) {
+      const savedEmail = localStorage.getItem("myapp-email");
+      const savedPassword = localStorage.getItem("myapp-password");
+      if (savedEmail && savedPassword) {
+        setEmail(savedEmail);
+        setPassword(savedPassword);
+        setRememberMe(true);
       }
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || err.response?.data?.message || "Failed to sign up";
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [isSignUp]);
 
   return (
-    <div className="min-h-screen flex bg-background">
-      {/* Left side - Auth form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background">
-        <div className="w-full max-w-md">
-          {/* Logo and Theme Toggle */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <span className="text-2xl font-bold text-foreground">Omnitype</span>
-            </div>
-            <ThemeToggle />
-          </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 relative">
+      {/* Back to Home Button */}
+      <button
+        onClick={() => router.push("/")}
+        className="absolute top-8 left-8 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors group"
+      >
+        <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+        <span className="text-sm font-medium">Back to Home</span>
+      </button>
 
-          {/* Welcome text */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">Welcome Back</h1>
-            <p className="text-muted-foreground">We're happy to see you again</p>
-          </div>
-
-          {/* Tabs */}
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="signin">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="relative">
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      disabled={isLoading}
-                      className="pr-10"
-                    />
-                    <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      disabled={isLoading}
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-5 h-5 text-gray-400" />
-                      ) : (
-                        <Eye className="w-5 h-5 text-gray-400" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="remember"
-                      checked={rememberMe}
-                      onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                    />
-                    <label htmlFor="remember" className="text-sm text-text-secondary cursor-pointer">
-                      Remember me
-                    </label>
-                  </div>
-                  <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                    Forgot Password?
-                  </Link>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full py-6 rounded-xl"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Signing in..." : "Login"}
-                </Button>
-
-                <div className="relative my-6">
-                  <div className="absolute inset-0 flex items-center">
-                    {/* <div className="w-full border-t border-gray-300" /> */}
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    {/* <span className="px-4 bg-card-bg text-text-secondary">OR</span> */}
-                  </div>
-                </div>
-
-                {/* <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full bg-white hover:bg-gray-50 text-gray-700 py-6 rounded-xl"
-                >
-                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                  </svg>
-                  Log in with Google
-                </Button> */}
-              </form>
-            </TabsContent>
-
-            <TabsContent value="signup">
-              <SignUpForm onSubmit={handleSignUp} isLoading={isLoading} error={error} />
-            </TabsContent>
-          </Tabs>
+      <div
+        ref={containerRef}
+        className="bg-white rounded-3xl shadow-xl w-full max-w-md p-8 md:p-10"
+      >
+        {/* Pill Badge - Changes based on mode */}
+        <div className="flex justify-center mb-4">
+          <span className="inline-block bg-yellow-300 text-black text-sm font-medium px-4 py-1.5 rounded-full">
+            Omnidocs {isSignUp ? "Sign Up" : "Login"}
+          </span>
         </div>
-      </div>
 
-      {/* Right side - Gradient background */}
-      <div className="hidden lg:block lg:w-1/2">
-        <GradientBackground />
+        {/* Welcome Heading - Changes based on mode */}
+        <h1 className="text-4xl md:text-5xl font-bold text-center mb-8 text-gray-900">
+          {isSignUp ? "Join Omnidocs!" : "Welcome Back!"}
+        </h1>
+
+        {/* Error Alert */}
+        {error && (
+          <div
+            ref={errorRef}
+            className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"
+          >
+            {error}
+          </div>
+        )}
+
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-5">
+          {/* Name field - only visible in signup mode */}
+          {isSignUp && (
+            <div key="name-field">
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-gray-900 mb-2"
+              >
+                Full Name
+              </label>
+              <input
+                id="name"
+                type="text"
+                placeholder="Enter your full name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                disabled={isLoading}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-lime-400 focus:border-transparent outline-none transition-all bg-white text-gray-900 placeholder-gray-400 disabled:opacity-50 disabled:bg-gray-50"
+              />
+            </div>
+          )}
+
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-900 mb-2"
+            >
+              Email Address
+            </label>
+            <input
+              id="email"
+              type="email"
+              placeholder="somemail@mail.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={isLoading}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-lime-400 focus:border-transparent outline-none transition-all bg-white text-gray-900 placeholder-gray-400 disabled:opacity-50 disabled:bg-gray-50"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-900 mb-2"
+            >
+              Password
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={isLoading}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-lime-400 focus:border-transparent outline-none transition-all bg-white text-gray-900 placeholder-gray-400 disabled:opacity-50 disabled:bg-gray-50"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                {showPassword ? (
+                  <EyeSlash size={20} />
+                ) : (
+                  <Eye size={20} />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Remember me and Forgot password - only visible in signin mode */}
+          {!isSignUp && (
+            <div key="remember-forgot" className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 text-lime-400 focus:ring-lime-500 border-gray-300 rounded cursor-pointer"
+                />
+                <label
+                  htmlFor="remember-me"
+                  className="ml-2 block text-sm text-gray-700 cursor-pointer"
+                >
+                  Remember me
+                </label>
+              </div>
+
+              <div className="text-sm">
+                <button
+                  type="button"
+                  className="font-medium text-gray-900 hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Submit button - Text changes based on mode */}
+          <div 
+            className="w-full"
+            onClick={() => submitButtonRef.current?.click()}
+          >
+            <CustomSubmitButton 
+              text={
+                isLoading 
+                  ? (isSignUp ? "Creating Account..." : "Signing in...") 
+                  : (isSignUp ? "Create an Account" : "Log In")
+              } 
+              disabled={isLoading}
+            />
+          </div>
+
+          {/* Hidden submit button */}
+          <button ref={submitButtonRef} type="submit" className="hidden" />
+
+          {/* Toggle between signin/signup - Text changes based on mode */}
+          <div className="text-center mt-6">
+            <p className="text-sm text-gray-600">
+              {isSignUp ? "Already have an account? " : "Don't have an account? "}
+              <button
+                type="button"
+                onClick={() => router.push(isSignUp ? "/signin" : "/signup")}
+                className="text-gray-900 font-semibold hover:underline"
+              >
+                {isSignUp ? "Log in" : "Sign up"}
+              </button>
+            </p>
+          </div>
+        </form>
       </div>
     </div>
   );
 }
 
-function SignUpForm({ 
-  onSubmit, 
-  isLoading, 
-  error 
-}: { 
-  onSubmit: (e: React.FormEvent, name: string, email: string, password: string) => void;
-  isLoading: boolean;
-  error: string;
-}) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+// Custom submit button component
+function CustomSubmitButton({ text, disabled }: { text: string; disabled: boolean }) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const spanRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!buttonRef.current || !spanRef.current || disabled) return;
+
+    const span = spanRef.current;
+    const tl = gsap.timeline({ paused: true });
+
+    tl.to(span, { duration: 0.2, yPercent: -150, ease: "power2.in" });
+    tl.set(span, { yPercent: 150 });
+    tl.to(span, { duration: 0.2, yPercent: 0 });
+
+    const button = buttonRef.current;
+    const handleMouseEnter = () => tl.play(0);
+
+    button.addEventListener('mouseenter', handleMouseEnter);
+
+    return () => {
+      button.removeEventListener('mouseenter', handleMouseEnter);
+    };
+  }, [disabled]);
 
   return (
-    <form onSubmit={(e) => onSubmit(e, name, email, password)} className="space-y-4">
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      <div className="space-y-2">
-        <Label htmlFor="signup-name">Full Name</Label>
-        <Input
-          id="signup-name"
-          type="text"
-          placeholder="Enter your full name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-          disabled={isLoading}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="signup-email">Email</Label>
-        <div className="relative">
-          <Input
-            id="signup-email"
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={isLoading}
-            className="pr-10"
-          />
-          <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="signup-password">Password</Label>
-        <div className="relative">
-          <Input
-            id="signup-password"
-            type={showPassword ? "text" : "password"}
-            placeholder="Create a password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            disabled={isLoading}
-            className="pr-10"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2"
-          >
-            {showPassword ? (
-              <EyeOff className="w-5 h-5 text-gray-400" />
-            ) : (
-              <Eye className="w-5 h-5 text-gray-400" />
-            )}
-          </button>
-        </div>
-      </div>
-
-      <Button
-        type="submit"
-        className="w-full py-6 rounded-xl"
-        disabled={isLoading}
-      >
-        {isLoading ? "Creating account..." : "Sign Up"}
-      </Button>
-
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          {/* <div className="w-full border-t border-gray-300" /> */}
-        </div>
-        <div className="relative flex justify-center text-sm">
-          {/* <span className="px-4 bg-card-bg text-text-secondary">OR</span> */}
-        </div>
-      </div>
-
-      
-
-      {/* <Button
-        type="button"
-        variant="outline"
-        className="w-full bg-white hover:bg-gray-50 text-gray-700 py-6 rounded-xl"
-      >
-        <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-        </svg>
-        Sign up with Google
-      </Button> */}
-    </form>
+    <button
+      ref={buttonRef}
+      type="button"
+      disabled={disabled}
+      className={`w-full inline-grid bg-lime-300 hover:bg-lime-400 rounded-xl px-6 py-3.5 text-black overflow-hidden text-center cursor-pointer transition-colors duration-200 text-base font-medium ${
+        disabled ? 'opacity-50 cursor-not-allowed' : ''
+      }`}
+    >
+      <span ref={spanRef} className="inline-block">
+        {text}
+      </span>
+    </button>
   );
 }

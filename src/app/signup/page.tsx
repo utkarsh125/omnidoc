@@ -1,15 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import AuthForm from "../signin/page"; 
 
-export default function SignUpPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    // Redirect to signin page which now has tabs for both signin and signup
-    router.push("/signin");
-  }, [router]);
-
-  return null;
+export default function SignInPage() {
+  return <AuthForm mode="signup" />;
 }

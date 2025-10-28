@@ -1,15 +1,15 @@
 'use client'
 
-import { Navigation } from "@/components/landing/Navigation";
-import { Hero } from "@/components/landing/Hero";
-import { TrustSection } from "@/components/landing/TrustSection";
+import Navbar from './components/Navbar'; 
+import Hero from './components/Hero'; 
+import Footer from './components/Footer';
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen">
-      <Navigation />
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 to-white">
+      <Navbar />
       <Hero />
-      <TrustSection />
-    </main>
+      <Footer />
+    </div>
   );
 }
