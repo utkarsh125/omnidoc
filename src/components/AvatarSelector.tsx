@@ -35,58 +35,116 @@ export default function AvatarSelector({
 
     //GSAP Refs
 
+    // useEffect(() => {
+    //     const ctx = gsap.context(() => {
+
+    //         //overlay fade in
+    //         gsap.from(overlayRef.current, {
+    //             opacity: 0,
+    //             duration: 0.3,
+    //             ease: "power2.out"
+    //         });
+
+    //         //modal scale and fade in w/ bounce
+    //         gsap.from(modalRef.current, {
+    //             scale: 0.8,
+    //             opacity: 0,
+    //             y: 50,
+    //             duration: 0.5,
+    //             ease: "back.out(1.7)"
+    //         });
+
+    //         //title slide in from left
+    //         gsap.from(titleRef.current, {
+    //             y: -30,
+    //             opacity: 0,
+    //             duration: 0.6,
+    //             delay: 0.2,
+    //             ease: "power3.out"
+    //         });
+
+    //         //close button rotate in
+    //         gsap.from(closeButtonRef.current, {
+    //             rotate: -90,
+    //             opacity: 0,
+    //             duration: 0.4,
+    //             ease: "back.out(2)"
+    //         });
+
+    //         //avatar stagger animation --pop in 1by1
+    //         gsap.from(avatarsRef.current, {
+    //             scale: 0,
+    //             opacity: 0,
+    //             rotation: 180,
+    //             duration: 0.6,
+    //             stagger: 0.08,
+    //             delay: 0.4,
+    //             ease: "power1.in"
+
+    //         });
+    //     });
+
+    //     return () => ctx.revert();
+    // }, []);
+
+
     useEffect(() => {
-        const ctx = gsap.context(() => {
-
-            //overlay fade in
-            gsap.from(overlayRef.current, {
-                opacity: 0,
-                duration: 0.3,
-                ease: "power2.out"
-            });
-
-            //modal scale and fade in w/ bounce
-            gsap.from(modalRef.current, {
-                scale: 0.8,
-                opacity: 0,
-                y: 50,
-                duration: 0.5,
-                ease: "back.out(1.7)"
-            });
-
-            //title slide in from left
-            gsap.from(titleRef.current, {
-                y: -30,
-                opacity: 0,
-                duration: 0.6,
-                delay: 0.2,
-                ease: "power3.out"
-            });
-
-            //close button rotate in
-            gsap.from(closeButtonRef.current, {
-                rotate: -90,
-                opacity: 0,
-                duration: 0.4,
-                ease: "back.out(2)"
-            });
-
-            //avatar stagger animation --pop in 1by1
-            gsap.from(avatarsRef.current, {
-                scale: 0,
-                opacity: 0,
-                rotation: 180,
-                duration: 0.6,
-                stagger: 0.08,
-                delay: 0.4,
-                ease: "back.out(1.7"
-
-            });
-        });
-
-        return () => ctx.revert();
-    }, []);
-
+      const ctx = gsap.context(() => {
+          // Set avatars invisible initially
+          gsap.set(avatarsRef.current, {
+              autoAlpha: 0,
+              scale: 0,
+              rotation: 180
+          });
+  
+          // Overlay fade in
+          gsap.from(overlayRef.current, {
+              opacity: 0,
+              duration: 0.3,
+              ease: "power2.out"
+          });
+  
+          // Modal scale and fade in with bounce
+          gsap.from(modalRef.current, {
+              scale: 0.8,
+              opacity: 0,
+              y: 50,
+              duration: 0.5,
+              ease: "back.out"
+          });
+  
+          // Title slide in
+          gsap.from(titleRef.current, {
+              y: -30,
+              opacity: 0,
+              duration: 0.6,
+              delay: 0.2,
+              ease: "power3.out"
+          });
+  
+          // Close button rotate in
+          gsap.from(closeButtonRef.current, {
+              rotate: -90,
+              opacity: 0,
+              duration: 0.4,
+              ease: "back.out(2)"
+          });
+  
+          // Avatar stagger animation with small delay for image load
+          gsap.to(avatarsRef.current, {
+              autoAlpha: 1,
+              scale: 1,
+              rotation: 0,
+              duration: 0.6,
+              stagger: 0.08,
+              delay: 0.5,  // Slightly longer delay
+              ease: "back.out"
+          });
+      });
+  
+      return () => ctx.revert();
+  }, []);
+  
     const handleSelect = ( avatar: string ) => {
         setSelectedAvatar(avatar);
 

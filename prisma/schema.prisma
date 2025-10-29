@@ -29,6 +29,7 @@ model User {
   rooms RoomUser[]
   createdRooms Room[] //rooms created by this usr.
   @@index([email])
+  @@index([id])
 }
 
 model Room {

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@/generated/prisma";
 import { getCurrentUserIdFromRequest, createAuthErrorResponse } from "@/lib/auth";
+import { revalidateTag, unstable_cache } from "next/cache";
 
 const prisma = new PrismaClient();
 
@@ -25,6 +26,30 @@ export async function GET(request: NextRequest){
             userId: string;
             email: string;
         };
+
+        //todo: cache user-details with revalidation
+        const getCachedUser = unstable_cache(
+            async(userId: string ) => {
+
+                return await prisma.user.findUnique({
+                    where: {
+                        id: userId
+                    },
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        avatar: true,
+                    }
+                });
+            },
+            ['user-profile', decoded.userId],
+
+            {
+                tags: [`user-${decoded.userId}`],
+                revalidate: 60 //cache for 60 seconds
+            }
+        )
 
         //get user from database
         const user = await prisma.user.findUnique({
@@ -95,6 +120,9 @@ export async function PATCH(request: NextRequest){
             }
         });
 
+        //immediate revalidation of cache for this user
+        revalidateTag(`user-${userId}`);
+
         return NextResponse.json(updatedUser);
     } catch (error) {
 
@@ -105,7 +133,7 @@ export async function PATCH(request: NextRequest){
              status: 500
         })
         
-    } finally {
-        await prisma.$disconnect();
-    }
+    } 
+
+    //removing finally block since it can cause severe performance drops.
 }
