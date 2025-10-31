@@ -7,6 +7,7 @@ import CollaborationCursor from '@tiptap/extension-collaboration-cursor'
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 import { useEffect, useState, useCallback, useMemo } from 'react'
+import { WS_ADDR } from '../../constants'
 
 interface CollaborativeEditorProps {
   documentId: string
@@ -21,8 +22,9 @@ export default function CollaborativeEditor({
 
   // Create Yjs doc and provider only once
   const ydoc = useMemo(() => new Y.Doc(), [])
+
   const wsProvider = useMemo(() => 
-    new WebsocketProvider('ws://localhost:4000', documentId, ydoc), 
+    new WebsocketProvider(WS_ADDR, documentId, ydoc), 
     [documentId, ydoc]
   )
 
@@ -34,6 +36,7 @@ export default function CollaborativeEditor({
       }),
       Collaboration.configure({
         document: ydoc,
+        // fragment: yXmlFragment, if normal shit dont work
       }),
       // Only add cursor extension after provider is ready
       ...(wsProvider ? [
@@ -41,9 +44,9 @@ export default function CollaborativeEditor({
           provider: wsProvider,
           user: {
             name: username,
-            color: `#${Math.floor(Math.random() * 16777215).toString(16)}`
+            color: getRandomHex() 
           }
-        })
+        }),
       ] : [])
     ],
     editorProps: {
@@ -117,3 +120,8 @@ export default function CollaborativeEditor({
     </div>
   )
 }
+
+function getRandomHex() : string {
+  return `#${Math.floor(Math.random() * 16777215).toString(16)}`
+}
+

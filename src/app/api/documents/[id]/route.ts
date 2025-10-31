@@ -82,7 +82,10 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(document);
+    return NextResponse.json(
+      {data: document},
+      {status: 200},
+    );
   } catch (error) {
     console.error("Error fetching document: ", error);
     return NextResponse.json(
